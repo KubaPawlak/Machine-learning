@@ -1,59 +1,38 @@
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from task_1.tmdb.client import Client
+scaler = StandardScaler()
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
 
+def create_feature_vector(movie_features: dict, fit_scaler=False, fit_encoder=False) -> pd.Series:
+    df = pd.DataFrame([movie_features])
 
-def create_feature_dataframe(movie_ids, client):
-    data = []
-    for movie_id in movie_ids:
-        movie_data = client.fetch_movie_data(movie_id)
-        features = client.extract_features(movie_data)
-        features['movie_id'] = movie_id
-        data.append(features)
-    df = pd.DataFrame(data)
-    df.set_index('movie_id', inplace=True)
+    categorical_cols = ['genre', 'director', 'cast', 'language', 'country_of_origin']
+    numerical_cols = ['rating', 'budget', 'revenue', 'runtime']
 
-    return df
+    if fit_encoder:
+        encoded_features = encoder.fit_transform(df[categorical_cols])
+    else:
+        encoded_features = encoder.transform(df[categorical_cols])
 
-    # df_normalized = preprocess_and_normalize_data(df)
-    #
-    # return df_normalized
+    encoded_df = pd.DataFrame(encoded_features, columns=encoder.get_feature_names_out(categorical_cols))
 
-def preprocess_and_normalize_data(df: pd.DataFrame):
-    categorical_columns = ['genre', 'director', 'cast', 'language', 'country_of_origin']
-    numerical_columns = ['rating', 'budget', 'revenue', 'runtime']
+    combined = pd.concat([encoded_df, df[numerical_cols]], axis=1)
 
-    # handling missing values in numerical columns with mean
-    imputer = SimpleImputer(strategy='mean')
-    df[numerical_columns] = imputer.fit_transform(df[numerical_columns])
+    if fit_scaler:
+        combined[numerical_cols] = scaler.fit_transform(combined[numerical_cols])
+    else:
+        combined[numerical_cols] = scaler.transform(combined[numerical_cols])
 
-    categorical_transformer = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
-
-    numerical_transformer = MinMaxScaler()
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('cat', categorical_transformer, categorical_columns),
-            ('num', numerical_transformer, numerical_columns)
-        ]
-    )
-
-    transformed_data = preprocessor.fit_transform(df)
-
-    column_names = (preprocessor.transformers_[0][1].get_feature_names_out(categorical_columns).tolist() +
-                    numerical_columns)
-
-    df_normalized = pd.DataFrame(transformed_data, columns=column_names, index=df.index)
-
-    return df_normalized
+    return combined.iloc[0]
 
 
-# Example usage for dataframe:
-if __name__ == '__main__':
-    client = Client()
-    movie_ids = [550, 500, 600]
-    feature_df = create_feature_dataframe(movie_ids, client)
-    print(feature_df.head())
+def convert_movies_to_feature_vectors(movies_list: list) -> pd.DataFrame:
+    feature_vectors = pd.DataFrame()
+    for i, movie in enumerate(movies_list):
+        fit_scaler = (i == 0)
+        fit_encoder = (i == 0)
+        features = create_feature_vector(movie, fit_scaler, fit_encoder)
+        feature_vectors = feature_vectors.append(features, ignore_index=True)
+
+    return feature_vectors
