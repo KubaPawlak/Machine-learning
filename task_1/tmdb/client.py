@@ -2,7 +2,6 @@ import logging
 import json
 from os import getenv
 
-import pandas as pd
 import requests
 
 
@@ -46,15 +45,3 @@ class Client:
             'country_of_origin': ';'.join([country['iso_3166_1'] for country in movie_data.get('production_countries', [])])
         }
         return features
-
-def create_feature_dataframe(movie_ids, client):
-    data = []
-    for movie_id in movie_ids:
-        movie_data = client.fetch_movie_data(movie_id)
-        features = client.extract_features(movie_data)
-        features['movie_id'] = movie_id
-        data.append(features)
-    df = pd.DataFrame(data)
-    df.set_index('movie_id', inplace=True)
-    return df
-
