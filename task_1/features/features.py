@@ -33,6 +33,6 @@ def convert_movies_to_feature_vectors(movies_list: list) -> pd.DataFrame:
         fit_scaler = (i == 0)
         fit_encoder = (i == 0)
         features = create_feature_vector(movie, fit_scaler, fit_encoder)
-        feature_vectors = feature_vectors.append(features, ignore_index=True)
+        feature_vectors = feature_vectors._append(features, ignore_index=True)
 
     return feature_vectors
