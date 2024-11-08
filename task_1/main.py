@@ -1,7 +1,11 @@
 from data.movie import movies, train, task
+from task_1.tmdb.client import Client
+
 
 def main()-> None:
-    pass
+    client = Client()
+    movie = client.get_movie(62)
+    print(movie)
 
 if __name__ == '__main__':
     main()

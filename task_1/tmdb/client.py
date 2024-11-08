@@ -4,6 +4,24 @@ from os import getenv
 
 import requests
 
+from task_1.movie import Movie
+
+
+def _map_response_to_movie(movie_data: dict) -> Movie:
+
+    return Movie(
+        title=movie_data['title'],
+        runtime=movie_data['runtime'],
+        budget=movie_data['budget'],
+        revenue=movie_data['revenue'],
+        genres=[genre['id'] for genre in movie_data['genres']],
+        popularity=movie_data['popularity'],
+        release_year=int(movie_data['release_date'][:4]),
+        vote_average=movie_data['vote_average'],
+        vote_count=movie_data['vote_count'],
+        cast=[actor['name'] for actor in movie_data['credits']['cast']],
+    )
+
 
 class Client:
     def __init__(self, token: str | None = None):
@@ -15,7 +33,7 @@ class Client:
 
         self.token: str = token
 
-    def fetch_movie_data(self, movie_id: int):
+    def get_movie_raw(self, movie_id: int):
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits"
 
         headers = {
@@ -31,17 +49,6 @@ class Client:
 
         return json.loads(response.text)
 
-    def extract_features(self, movie_data: dict) -> dict:
-        features = {
-            'genre': ';'.join([genre['name'] for genre in movie_data.get('genres', [])]),
-            'rating': movie_data.get('vote_average', 0),
-            'director': ';'.join([crew_member['name'] for crew_member in movie_data.get('credits', {}).get('crew', []) if crew_member['job'] == 'Director']),
-            'cast': ';'.join([cast_member['name'] for cast_member in movie_data.get('credits', {}).get('cast', [])]),
-            'release_date': movie_data.get('release_date', ''),
-            'budget': movie_data.get('budget', 0),
-            'revenue': movie_data.get('revenue', 0),
-            'runtime': movie_data.get('runtime', 0),
-            'language': ';'.join([language['iso_639_1'] for language in movie_data.get('spoken_languages', [])]),
-            'country_of_origin': ';'.join([country['iso_3166_1'] for country in movie_data.get('production_countries', [])])
-        }
-        return features
+    def get_movie(self, movie_id: int) -> Movie:
+        movie_data = self.get_movie_raw(movie_id)
+        return _map_response_to_movie(movie_data)
