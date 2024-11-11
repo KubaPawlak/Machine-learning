@@ -1,14 +1,36 @@
-import logging
+import atexit
 import json
+import logging
 from os import getenv
+from pathlib import Path
+from pickle import dump, load
 
 import requests
 
 from task_1.movie import Movie
 
+_CACHE_PATH = Path(__file__).parent / 'response_cache.pkl'
+
+
+def _load_response_cache() -> dict[int, str]:
+    try:
+        with open(_CACHE_PATH, 'rb') as file:
+            return load(file)
+    except FileNotFoundError:
+        return {}
+
+
+def _save_response_cache():
+    with open(_CACHE_PATH, 'wb') as file:
+        # noinspection PyTypeChecker
+        dump(_response_cache, file)
+
+
+_response_cache: dict[int, str] = _load_response_cache()
+atexit.register(_save_response_cache)
+
 
 def _map_response_to_movie(movie_data: dict) -> Movie:
-
     return Movie(
         title=movie_data['title'],
         runtime=movie_data['runtime'],
@@ -33,7 +55,7 @@ class Client:
 
         self.token: str = token
 
-    def get_movie_raw(self, movie_id: int):
+    def _call_api(self, movie_id) -> str:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits"
 
         headers = {
@@ -47,7 +69,18 @@ class Client:
             logging.error(f"TMDB api returned response with status code {response.status_code}: {response.text}")
             raise RuntimeError(f"TMDB api invalid response: {response.text}")
 
-        return json.loads(response.text)
+        return response.text
+
+    def get_movie_raw(self, movie_id: int):
+        if movie_id in _response_cache:
+            response = _response_cache[movie_id]
+        else:
+            response = self._call_api(movie_id)
+            _response_cache[movie_id] = response
+
+        assert movie_id in _response_cache
+
+        return json.loads(response)
 
     def get_movie(self, movie_id: int) -> Movie:
         movie_data = self.get_movie_raw(movie_id)
