@@ -1,30 +1,33 @@
 from collections.abc import Callable
+from typing import Iterable
 
 import numpy as np
 
+from task_1.movie import Movie
+
 
 class KNeighborsClassifier:
-    def __init__(self, n_neighbors: int, similarity_function: Callable[[np.ndarray, np.ndarray], float]) -> None:
+    def __init__(self, n_neighbors: int, distance_function: Callable[[Movie, Movie], float]) -> None:
         if n_neighbors < 1:
             raise ValueError('n_neighbors must be a positive integer')
 
         self.n_neighbors = n_neighbors
-        self.similarity = similarity_function
+        self.distance = distance_function
 
-    def fit_predict(self, features: np.ndarray, labels: np.ndarray, prediction_features: np.ndarray) -> int:
+    def fit_predict(self, watched_movies: Iterable[Movie], labels: np.ndarray, movie_to_predict: Movie) -> int:
         """
-        :param features: features of the data points to evaluate against.
+        :param watched_movies: past watched movies to evaluate against.
         :param labels: labels of the data points to evaluate against.
-        :param prediction_features: features of the point to be predicted.
+        :param movie_to_predict: features of the point to be predicted.
         :return: predicted label.
         """
-        similarity = lambda x: self.similarity(x, prediction_features)
+        distance = lambda x: self.distance(x, movie_to_predict)
 
         # calculate distance to each data point
-        point_similarities = np.apply_along_axis(similarity, 1, features)
+        point_distances = np.array(list(map(distance, watched_movies)))
 
         # get k indices with the smallest distance
-        k_smallest_indices = np.argpartition(-point_similarities, self.n_neighbors - 1)[:self.n_neighbors]
+        k_smallest_indices = np.argpartition(point_distances, self.n_neighbors - 1)[:self.n_neighbors]
 
         # retrieve the labels for the k closest points
         k_closest_labels = labels[k_smallest_indices]
