@@ -1,5 +1,7 @@
 import json
 
+import numpy as np
+
 
 class Movie:
 
@@ -18,3 +20,16 @@ class Movie:
 
     def __repr__(self) -> str:
         return json.dumps(self.__dict__)
+
+    def to_feature_vector(self):
+        # Normalize numerical features
+        return np.array([
+            self.budget / 1e6,  # Scale budget to millions
+            self.popularity,
+            self.runtime / 60,  # Scale runtime to hours
+            self.vote_average,
+            self.vote_count / 1000,  # Scale vote_count
+            len(self.genres),  # Number of genres as a feature
+            len(self.cast),  # Number of cast members
+            self.release_year
+        ])

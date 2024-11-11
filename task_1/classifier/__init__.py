@@ -22,8 +22,9 @@ class KNeighborsClassifier:
 
         # calculate distance to each data point
         point_similarities = np.apply_along_axis(similarity, 1, features)
+
         # get k indices with the smallest distance
-        k_smallest_indices = np.argpartition(point_similarities, self.n_neighbors - 1)[:self.n_neighbors]
+        k_smallest_indices = np.argpartition(-point_similarities, self.n_neighbors - 1)[:self.n_neighbors]
 
         # retrieve the labels for the k closest points
         k_closest_labels = labels[k_smallest_indices]
