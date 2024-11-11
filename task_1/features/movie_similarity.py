@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 
 from task_1.features import cosine_similarity, jaccard_similarity
-from task_1.tmdb.client import Client
-
 
 def load_data(file_path):
     """Load the ratings data from a CSV file."""
@@ -44,26 +42,5 @@ def calculate_movie_similarity(movie1, movie2, ratings_matrix=None):
     total_similarity = (6 / 9) * numerical_similarity + (1 / 9) * genres_similarity + (1 / 9) * cast_similarity + (
                 1 / 9) * ratings_similarity
     return total_similarity
-
-def main():
-    # Load and prepare the ratings data
-    train_data = load_data('../../data/movie/raw/train.csv')
-    ratings_matrix = create_ratings_matrix(train_data)
-
-    # Initialize the TMDB client
-    client = Client()
-
-    # Get two movie objects using their IDs (for example, 62 and 63)
-    movie_62 = client.get_movie(62)
-    movie_63 = client.get_movie(63)
-
-    # Calculate the similarity between these two movies based on features, genres, cast, and ratings
-    similarity = calculate_movie_similarity(movie_62, movie_63, ratings_matrix)
-
-    # Print the similarity score between the two movies based on all criteria (features, genres, cast, ratings)
-    print(f"Total similarity between Movie 62 and Movie 63 based on features, genres, cast, and ratings: {similarity}")
-
-if __name__ == "__main__":
-    main()
 
 
