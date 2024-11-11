@@ -1,9 +1,6 @@
-import numpy as np
 import pandas as pd
 
 from task_1.features import cosine_similarity, jaccard_similarity
-from task_1.movie.tmdb.client import Client
-
 
 def load_data(file_path):
     """Load the ratings data from a CSV file."""
