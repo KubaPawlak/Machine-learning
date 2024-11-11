@@ -48,7 +48,7 @@ def _map_response_to_movie(movie_id: int, movie_data: dict) -> Movie:
 
 
 def _lookup_tmdb_id(movie_id: int):
-    return movies[movies['MovieID'] == movie_id]['TMDBID']
+    return int(movies[movies['ID'] == movie_id]['TMDBID'].iloc[0])
 
 
 class Client:
@@ -75,7 +75,7 @@ class Client:
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            logging.error(f"TMDB api returned response with status code {response.status_code}: {response.text}")
+            logging.error(f"TMDB api returned response with status code {response.status_code}, movie_id={tmdb_id}({movie_id}): {response.text}")
             raise RuntimeError(f"TMDB api invalid response: {response.text}")
 
         return response.text
