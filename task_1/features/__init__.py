@@ -17,6 +17,3 @@ def jaccard_similarity(set_a: set, set_b: set) -> float:
         return 0.0
     return intersection / union
 
-def normalize(value: float, min_value: float, max_value: float) -> float:
-    """Normalize a value to the range [0, 1]."""
-    return (value - min_value) / (max_value - min_value) if max_value > min_value else 0

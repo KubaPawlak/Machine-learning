@@ -1,7 +1,7 @@
 import json
+from typing import List
 
 import numpy as np
-
 
 class Movie:
 
@@ -9,27 +9,27 @@ class Movie:
                  cast):
         self.title: str = title
         self.budget: int = budget
-        self.genres: list[int] = genres
+        self.genres: List[int] = genres
         self.popularity: float = popularity
         self.release_year: int = release_year
         self.revenue: int = revenue
         self.runtime: int = runtime
         self.vote_average: float = vote_average
         self.vote_count: int = vote_count
-        self.cast: list[str] = cast
+        self.cast: List[str] = cast
 
     def __repr__(self) -> str:
         return json.dumps(self.__dict__)
 
     def to_feature_vector(self):
         # Normalize numerical features
-        return np.array([
+        numerical_features = np.array([
             self.budget / 1e6,  # Scale budget to millions
             self.popularity,
             self.runtime / 60,  # Scale runtime to hours
             self.vote_average,
             self.vote_count / 1000,  # Scale vote_count
-            len(self.genres),  # Number of genres as a feature
-            len(self.cast),  # Number of cast members
             self.release_year
         ])
+
+        return numerical_features
