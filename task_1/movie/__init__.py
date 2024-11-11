@@ -1,5 +1,4 @@
 import json
-from typing import List
 
 import numpy as np
 
@@ -9,14 +8,14 @@ class Movie:
                  cast):
         self.title: str = title
         self.budget: int = budget
-        self.genres: List[int] = genres
+        self.genres: list[int] = genres
         self.popularity: float = popularity
         self.release_year: int = release_year
         self.revenue: int = revenue
         self.runtime: int = runtime
         self.vote_average: float = vote_average
         self.vote_count: int = vote_count
-        self.cast: List[str] = cast
+        self.cast: list[str] = cast
 
     def __repr__(self) -> str:
         return json.dumps(self.__dict__)
