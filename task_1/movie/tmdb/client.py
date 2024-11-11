@@ -8,6 +8,7 @@ from pickle import dump, load
 import requests
 
 from task_1.movie import Movie
+from data.movie import movies
 
 _CACHE_PATH = Path(__file__).parent / 'response_cache.pkl'
 
@@ -30,8 +31,9 @@ _response_cache: dict[int, str] = _load_response_cache()
 atexit.register(_save_response_cache)
 
 
-def _map_response_to_movie(movie_data: dict) -> Movie:
+def _map_response_to_movie(movie_id: int, movie_data: dict) -> Movie:
     return Movie(
+        movie_id=movie_id,
         title=movie_data['title'],
         runtime=movie_data['runtime'],
         budget=movie_data['budget'],
@@ -45,6 +47,10 @@ def _map_response_to_movie(movie_data: dict) -> Movie:
     )
 
 
+def _lookup_tmdb_id(movie_id: int):
+    return movies[movies['MovieID'] == movie_id]['TMDBID']
+
+
 class Client:
     def __init__(self, token: str | None = None):
         if token is None:
@@ -55,8 +61,11 @@ class Client:
 
         self.token: str = token
 
-    def _call_api(self, movie_id) -> str:
-        url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits"
+    def _call_api(self, movie_id: int) -> str:
+
+        tmdb_id = _lookup_tmdb_id(movie_id)
+
+        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?language=en-US&append_to_response=credits"
 
         headers = {
             "accept": "application/json",
@@ -84,4 +93,4 @@ class Client:
 
     def get_movie(self, movie_id: int) -> Movie:
         movie_data = self.get_movie_raw(movie_id)
-        return _map_response_to_movie(movie_data)
+        return _map_response_to_movie(movie_id, movie_data)

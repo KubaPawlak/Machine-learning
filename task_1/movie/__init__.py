@@ -5,8 +5,9 @@ import numpy as np
 
 class Movie:
 
-    def __init__(self, title, budget, genres, popularity, release_year, revenue, runtime, vote_average, vote_count,
+    def __init__(self, movie_id, title, budget, genres, popularity, release_year, revenue, runtime, vote_average, vote_count,
                  cast):
+        self.movie_id: int = movie_id
         self.title: str = title
         self.budget: int = budget
         self.genres: List[int] = genres
