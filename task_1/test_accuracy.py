@@ -7,9 +7,11 @@ from sklearn.model_selection import train_test_split
 
 from data.movie import train as global_train
 from task_1.main import generate_predictions
+from task_1.movie.tmdb.client import Client
+from task_1.similarity import fit_scaler
 from task_1.similarity.movie_similarity import calculate_movie_similarity, create_rating_matrix
 
-NUM_RUNS = 2
+NUM_RUNS = 3
 
 
 def test_parameters(n_neighbors: int,
@@ -25,7 +27,7 @@ def test_parameters(n_neighbors: int,
     scores = []
     for i in range(NUM_RUNS):
         logging.info("Running iteration %i", i + 1)
-        train, test = train_test_split(global_train, test_size=0.1, train_size=0.5)
+        train, test = train_test_split(global_train, test_size=0.1, train_size=0.4)
         train: pd.DataFrame
         test: pd.DataFrame
 
@@ -56,13 +58,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     parameters = {
-        'n_neighbors': 21,
-        'metric': 'manhattan',
-        'scalar_similarity_part': 30,
-        'genres_similarity_part': 0,
-        'cast_similarity_part': 0,
-        'directors_similarity_part': 0,
-        'ratings_similarity_part': 0,
+        'n_neighbors': 17,
+        'metric': 'euclidean',
+        'scalar_similarity_part': 6,
+        'genres_similarity_part': 1,
+        'cast_similarity_part': 1,
+        'directors_similarity_part': 1,
+        'ratings_similarity_part': 1,
     }
 
     accuracy = test_parameters(

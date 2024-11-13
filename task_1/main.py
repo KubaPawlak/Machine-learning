@@ -23,15 +23,16 @@ def generate_predictions(train: pd.DataFrame,
     logging.debug("Fitting scaler")
     fit_scaler(all_movies)
 
+    def distance_function(movie_1: Movie, movie_2: Movie) -> float:
+        # invert the result to convert from similarity (decreasing) to distance (increasing)
+        return 1 / similarity_fn(movie_1, movie_2)
+
+    classifier = KNeighborsClassifier(n_neighbors, distance_function)
+
     def predict_rating(row: pd.Series) -> int:
         user_id, movie_id = row['UserID'], row['MovieID']
         logging.debug("Predicting rating for movie %i by user %i", movie_id, user_id)
 
-        def distance_function(movie_1: Movie, movie_2: Movie) -> float:
-            # invert the result to convert from similarity (decreasing) to distance (increasing)
-            return -1 * similarity_fn(movie_1, movie_2)
-
-        classifier = KNeighborsClassifier(n_neighbors, distance_function)
         movie_to_predict = _tmdb_client.get_movie(movie_id)
 
         watched_movies_ratings: pd.DataFrame = train[train['UserID'] == user_id]
@@ -59,6 +60,16 @@ def generate_predictions(train: pd.DataFrame,
 
 def _main() -> None:
     logging.basicConfig(level=logging.DEBUG)
+
+    def similarity_fn(movie_1: Movie, movie_2: Movie) -> float:
+        return calculate_movie_similarity(movie_1, movie_2,
+                                          metric='euclidean',
+                                          scalar_similarity_part=0.6,
+                                          genres_similarity_part=0.1,
+                                          cast_similarity_part=0.1,
+                                          directors_similarity_part=0.1,
+                                          ratings_similarity_part=0.1
+                                          )
 
     from data.movie import task, train
     task_with_predictions = generate_predictions(train, task)

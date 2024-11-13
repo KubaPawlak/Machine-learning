@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Literal
 
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -31,14 +32,15 @@ def _calculate_rating_similarity(movie_1: Movie, movie_2: Movie, rating_matrix) 
     # Calculate cosine similarity for ratings
     return cosine_similarity(movie_1_ratings, movie_2_ratings)
 
+type VectorSimilarity = Literal['cosine', 'mahattan', 'euclidean']
 
-def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: str = 'cosine',
+def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: VectorSimilarity = 'cosine',
                                rating_matrix: pd.DataFrame | None = _global_rating_matrix,
-                               scalar_similarity_part: float = (6.0 / 10),
-                               genres_similarity_part: float = (1.0 / 10),
-                               cast_similarity_part: float = (1.0 / 10),
-                               directors_similarity_part: float = (1.0 / 10),
-                               ratings_similarity_part: float = (1.0 / 10)) -> float:
+                               scalar_similarity_part: float = 0.6,
+                               genres_similarity_part: float = 0.1,
+                               cast_similarity_part: float = 0.1,
+                               directors_similarity_part: float = 0.1,
+                               ratings_similarity_part: float = 0.1) -> float:
     """Calculate similarity between two movies based on similarity, genres, cast, and ratings."""
 
     # Calculate numerical feature similarity using cosine similarity

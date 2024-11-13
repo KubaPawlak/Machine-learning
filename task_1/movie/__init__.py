@@ -37,11 +37,11 @@ class Movie:
     def to_feature_vector(self):
         # Normalize numerical similarity
         numerical_features = np.array([
-            self.budget / 1e6,  # Scale budget to millions
+            self.budget,
             self.popularity,
-            self.runtime / 60,  # Scale runtime to hours
+            self.runtime,
             self.vote_average,
-            self.vote_count / 1000,  # Scale vote_count
+            self.vote_count,
             self.release_year
         ])
 
