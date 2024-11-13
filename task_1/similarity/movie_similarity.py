@@ -8,6 +8,7 @@ from task_1.movie import Movie
 from .cosine_similarity import cosine_similarity
 from .jaccard_similarity import jaccard_similarity
 from .manhattan_similarity import manhattan_distance
+from .euclidean import euclidean_similarity
 
 scaler = MinMaxScaler()
 
@@ -62,8 +63,11 @@ def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: str = 'co
         scalar_features_similarity = cosine_similarity(scalar_features_1, scalar_features_2)
     elif metric == 'manhattan':
         scalar_features_similarity = manhattan_distance(scalar_features_1, scalar_features_2)
+    elif metric == 'euclidean':
+        scalar_features_similarity = euclidean_similarity(scalar_features_1, scalar_features_2)
     else:
         scalar_features_similarity = cosine_similarity(scalar_features_1, scalar_features_2)
+    assert scalar_features_similarity is not None
 
     # Calculate rating similarity if ratings_matrix is provided
     ratings_similarity: float = 0
