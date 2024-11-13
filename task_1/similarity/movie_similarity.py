@@ -5,10 +5,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from data.movie import train
 from task_1.movie import Movie
-from .cosine_similarity import cosine_similarity
-from .jaccard_similarity import jaccard_similarity
-from .manhattan_similarity import manhattan_distance
-from .euclidean import euclidean_similarity
+from .vector import cosine_similarity, euclidean_similarity, manhattan_similarity
+from .set import jaccard_similarity
 
 scaler = MinMaxScaler()
 
@@ -62,7 +60,7 @@ def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: str = 'co
     if metric == 'cosine':
         scalar_features_similarity = cosine_similarity(scalar_features_1, scalar_features_2)
     elif metric == 'manhattan':
-        scalar_features_similarity = manhattan_distance(scalar_features_1, scalar_features_2)
+        scalar_features_similarity = manhattan_similarity(scalar_features_1, scalar_features_2)
     elif metric == 'euclidean':
         scalar_features_similarity = euclidean_similarity(scalar_features_1, scalar_features_2)
     else:
