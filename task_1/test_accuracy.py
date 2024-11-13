@@ -9,10 +9,17 @@ from data.movie import train as global_train
 from task_1.main import generate_predictions
 from task_1.similarity.movie_similarity import calculate_movie_similarity, create_rating_matrix
 
-NUM_RUNS = 1
+NUM_RUNS = 2
 
 
-def test_parameters(n_neighbors: int) -> float:
+def test_parameters(n_neighbors: int,
+                    metric: str,
+                    scalar_similarity_part: float = (6.0 / 10),
+                    genres_similarity_part: float = (1.0 / 10),
+                    cast_similarity_part: float = (1.0 / 10),
+                    directors_similarity_part: float = (1.0 / 10),
+                    ratings_similarity_part: float = (1.0 / 10)
+                    ) -> float:
     """Calculate the accuracy of the model for given parameters."""
 
     scores = []
@@ -29,7 +36,15 @@ def test_parameters(n_neighbors: int) -> float:
 
         # override similarity function by using only selected subset of training data
         def similarity_fn(movie_1, movie_2) -> float:
-            return calculate_movie_similarity(movie_1, movie_2, rating_matrix=rating_matrix)
+            return calculate_movie_similarity(movie_1, movie_2,
+                                              rating_matrix=rating_matrix,
+                                              metric=metric,
+                                              scalar_similarity_part=scalar_similarity_part,
+                                              genres_similarity_part=genres_similarity_part,
+                                              cast_similarity_part=cast_similarity_part,
+                                              directors_similarity_part=directors_similarity_part,
+                                              ratings_similarity_part=ratings_similarity_part
+                                              )
 
         predictions = generate_predictions(train, task, n_neighbors=n_neighbors, similarity_fn=similarity_fn)
 
@@ -37,16 +52,27 @@ def test_parameters(n_neighbors: int) -> float:
 
     return float(np.average(np.array(scores)))
 
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     parameters = {
-        'n_neighbors': 3
+        'n_neighbors': 21,
+        'metric': 'manhattan',
+        'scalar_similarity_part': 30,
+        'genres_similarity_part': 0,
+        'cast_similarity_part': 0,
+        'directors_similarity_part': 0,
+        'ratings_similarity_part': 0,
     }
 
     accuracy = test_parameters(
-        n_neighbors=parameters['n_neighbors']
+        n_neighbors=parameters['n_neighbors'],
+        metric=parameters['metric'],
+        scalar_similarity_part=parameters['scalar_similarity_part'],
+        genres_similarity_part=parameters['genres_similarity_part'],
+        cast_similarity_part=parameters['cast_similarity_part'],
+        directors_similarity_part=parameters['directors_similarity_part'],
+        ratings_similarity_part=parameters['ratings_similarity_part'],
     )
 
     print("=== Parameters: ===")

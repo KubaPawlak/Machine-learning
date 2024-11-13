@@ -1,6 +1,8 @@
+from cProfile import label
 from collections.abc import Callable
 
 import numpy as np
+from pyexpat import features
 
 from task_1.movie import Movie
 
@@ -27,7 +29,8 @@ class KNeighborsClassifier:
         point_distances = np.array(list(map(distance, watched_movies)))
 
         # get k indices with the smallest distance
-        k_smallest_indices = np.argpartition(point_distances, self.n_neighbors - 1)[:self.n_neighbors]
+        n_neighbors = min(self.n_neighbors, len(labels))
+        k_smallest_indices = np.argpartition(point_distances, n_neighbors - 1)[:n_neighbors]
 
         # retrieve the labels for the k closest points
         k_closest_labels = labels[k_smallest_indices]
