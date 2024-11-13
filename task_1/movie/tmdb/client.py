@@ -7,8 +7,8 @@ from pickle import dump, load
 
 import requests
 
-from task_1.movie import Movie
 from data.movie import movies
+from task_1.movie import Movie
 
 _CACHE_PATH = Path(__file__).parent / 'response_cache.pkl'
 
@@ -75,7 +75,8 @@ class Client:
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            logging.error(f"TMDB api returned response with status code {response.status_code}, movie_id={tmdb_id}({movie_id}): {response.text}")
+            logging.error(
+                f"TMDB api returned response with status code {response.status_code}, movie_id={tmdb_id}({movie_id}): {response.text}")
             raise RuntimeError(f"TMDB api invalid response: {response.text}")
 
         return response.text
