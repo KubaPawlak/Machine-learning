@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
@@ -7,6 +9,11 @@ from .cosine_similarity import cosine_similarity
 from .jaccard_similarity import jaccard_similarity
 from .manhattan_similarity import manhattan_distance
 
+scaler = MinMaxScaler()
+
+def fit_scaler(movies: Iterable[Movie]) -> None:
+    movies_features = [m.to_feature_vector() for m in movies]
+    scaler.fit(movies_features)
 
 def create_rating_matrix(train_data: pd.DataFrame) -> pd.DataFrame:
     return train_data.pivot_table(index='UserID', columns='MovieID', values='Rating', fill_value=0)
@@ -33,9 +40,8 @@ def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: str = 'co
     numerical_features_2 = movie_2.to_feature_vector()
 
     # Applying scaler for numerical features
-    scaler = MinMaxScaler()
-    scaled_features_1 = scaler.fit_transform([numerical_features_1])[0]
-    scaled_features_2 = scaler.fit_transform([numerical_features_2])[0]
+    scaled_features_1 = scaler.transform([numerical_features_1])[0]
+    scaled_features_2 = scaler.transform([numerical_features_2])[0]
 
     # Calculate Jaccard similarity for genres, cast and directors
     genres_similarity = jaccard_similarity(set(movie_1.genres), set(movie_2.genres))

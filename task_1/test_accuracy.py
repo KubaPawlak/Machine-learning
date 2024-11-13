@@ -9,7 +9,7 @@ from data.movie import train as global_train
 from task_1.main import generate_predictions
 from task_1.similarity.movie_similarity import calculate_movie_similarity, create_rating_matrix
 
-NUM_RUNS = 3
+NUM_RUNS = 1
 
 
 def test_parameters(n_neighbors: int) -> float:
@@ -18,7 +18,7 @@ def test_parameters(n_neighbors: int) -> float:
     scores = []
     for i in range(NUM_RUNS):
         logging.info("Running iteration %i", i + 1)
-        train, test = train_test_split(global_train, test_size=0.2)
+        train, test = train_test_split(global_train, test_size=0.1, train_size=0.5)
         train: pd.DataFrame
         test: pd.DataFrame
 
@@ -33,12 +33,13 @@ def test_parameters(n_neighbors: int) -> float:
 
         predictions = generate_predictions(train, task, n_neighbors=n_neighbors, similarity_fn=similarity_fn)
 
-        scores.append(accuracy_score(y_true=task['Rating'], y_pred=predictions['Rating']))
+        scores.append(accuracy_score(y_true=test['Rating'], y_pred=predictions['Rating']))
 
     return float(np.average(np.array(scores)))
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
 
     parameters = {
         'n_neighbors': 3

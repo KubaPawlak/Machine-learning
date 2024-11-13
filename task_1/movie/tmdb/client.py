@@ -57,12 +57,14 @@ class Client:
         if token is None:
             token = getenv("TMDB_READ_ACCESS_TOKEN")
         if token is None:
-            logging.error("TMDB_READ_ACCESS_TOKEN environment variable is not set")
-            raise RuntimeError("TMDB_READ_ACCESS_TOKEN is not set")
+            logging.warning("TMDB_READ_ACCESS_TOKEN environment variable is not set. Will fail if movie is not cached.")
 
-        self.token: str = token
+        self.token: str | None = token
 
     def _call_api(self, movie_id: int) -> str:
+        if self.token is None:
+            logging.error("TMDB_READ_ACCESS_TOKEN environment variable is not set")
+            raise RuntimeError("TMDB_READ_ACCESS_TOKEN is not set")
 
         tmdb_id = _lookup_tmdb_id(movie_id)
 

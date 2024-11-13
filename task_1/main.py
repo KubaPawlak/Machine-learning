@@ -5,7 +5,7 @@ from pathlib import Path
 from task_1.classification import KNeighborsClassifier
 from task_1.movie import Movie
 from task_1.movie.tmdb.client import Client
-from task_1.similarity import calculate_movie_similarity
+from task_1.similarity import calculate_movie_similarity, fit_scaler
 
 _RESULT_FILE = Path('task_1_result.csv').absolute()
 import pandas as pd
@@ -18,6 +18,11 @@ def generate_predictions(train: pd.DataFrame,
                          n_neighbors: int = 5,
                          similarity_fn: Callable[[Movie, Movie], float] = calculate_movie_similarity
                          ) -> pd.DataFrame:
+    logging.debug("Fetching movie data")
+    all_movies = [_tmdb_client.get_movie(movie_id) for movie_id in train['MovieID'].unique()]
+    logging.debug("Fitting scaler")
+    fit_scaler(all_movies)
+
     def predict_rating(row: pd.Series) -> int:
         user_id, movie_id = row['UserID'], row['MovieID']
         logging.debug("Predicting rating for movie %i by user %i", movie_id, user_id)
@@ -29,18 +34,16 @@ def generate_predictions(train: pd.DataFrame,
         classifier = KNeighborsClassifier(n_neighbors, distance_function)
         movie_to_predict = _tmdb_client.get_movie(movie_id)
 
-        watched_movies_ratings = train[train['UserID'] == user_id]
+        watched_movies_ratings: pd.DataFrame = train[train['UserID'] == user_id]
 
-        # get list of similarity for the movies watched by the user
-        watched_movies: pd.Series[int] = watched_movies_ratings['MovieID']
-        assert movie_id not in watched_movies.values
-        logging.debug("Gathering movies watched by user %i...", user_id)
-        watched_movies: list[Movie] = [_tmdb_client.get_movie(movie_id) for movie_id in watched_movies]
+        # get list of movies watched by the user
+        watched_movies: list[Movie] = [movie for movie in all_movies if
+                                       movie.movie_id in watched_movies_ratings['MovieID'].values]
 
         logging.debug("Generating prediction")
         predicted_rating = classifier.fit_predict(watched_movies, watched_movies_ratings['Rating'].to_numpy(),
                                                   movie_to_predict)
-        logging.info("Predicted rating of movie %i by user %i: %i", movie_id, user_id, predicted_rating)
+        logging.debug("Predicted rating of movie %i by user %i: %i", movie_id, user_id, predicted_rating)
         return predicted_rating
 
     # end predict_rating

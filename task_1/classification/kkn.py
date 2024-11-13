@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import Iterable
 
 import numpy as np
 
@@ -14,13 +13,14 @@ class KNeighborsClassifier:
         self.n_neighbors = n_neighbors
         self.distance = distance_function
 
-    def fit_predict(self, watched_movies: Iterable[Movie], labels: np.ndarray, movie_to_predict: Movie) -> int:
+    def fit_predict(self, watched_movies: list[Movie], labels: np.ndarray, movie_to_predict: Movie) -> int:
         """
         :param watched_movies: past watched movies to evaluate against.
         :param labels: labels of the data points to evaluate against.
         :param movie_to_predict: similarity of the point to be predicted.
         :return: predicted label.
         """
+        assert len(watched_movies) == len(labels), "Movies and labels arrays have different sizes"
         distance = lambda x: self.distance(x, movie_to_predict)
 
         # calculate distance to each data point
