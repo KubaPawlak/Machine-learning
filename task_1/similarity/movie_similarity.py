@@ -33,7 +33,7 @@ def _calculate_rating_similarity(movie_1: Movie, movie_2: Movie, rating_matrix) 
     return cosine_similarity(movie_1_ratings, movie_2_ratings)
 
 
-type VectorSimilarity = Literal['cosine', 'mahattan', 'euclidean']
+type VectorSimilarity = Literal['cosine', 'manhattan', 'euclidean']
 
 
 def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: VectorSimilarity = 'cosine',
