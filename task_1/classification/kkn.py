@@ -18,7 +18,7 @@ class KNeighborsClassifier:
         """
         :param watched_movies: past watched movies to evaluate against.
         :param labels: labels of the data points to evaluate against.
-        :param movie_to_predict: features of the point to be predicted.
+        :param movie_to_predict: similarity of the point to be predicted.
         :return: predicted label.
         """
         distance = lambda x: self.distance(x, movie_to_predict)

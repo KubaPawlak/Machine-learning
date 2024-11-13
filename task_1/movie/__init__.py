@@ -33,7 +33,7 @@ class Movie:
         return json.dumps(self.__dict__)
 
     def to_feature_vector(self):
-        # Normalize numerical features
+        # Normalize numerical similarity
         numerical_features = np.array([
             self.budget / 1e6,  # Scale budget to millions
             self.popularity,
