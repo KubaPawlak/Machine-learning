@@ -16,7 +16,8 @@ class Movie:
                  runtime,
                  vote_average,
                  vote_count,
-                 cast):
+                 cast,
+                 director):
         self.movie_id: int = movie_id
         self.title: str = title
         self.budget: int = budget
@@ -28,6 +29,7 @@ class Movie:
         self.vote_average: float = vote_average
         self.vote_count: int = vote_count
         self.cast: list[str] = cast
+        self.director: list[str] = director
 
     def __repr__(self) -> str:
         return json.dumps(self.__dict__)

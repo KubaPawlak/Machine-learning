@@ -1,9 +1,11 @@
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from data.movie import train
 from task_1.movie import Movie
 from .cosine_similarity import cosine_similarity
 from .jaccard_similarity import jaccard_similarity
+from .manhattan_similarity import manhattan_distance
 
 
 def create_rating_matrix(train_data: pd.DataFrame) -> pd.DataFrame:
@@ -22,20 +24,30 @@ def _calculate_rating_similarity(movie_1: Movie, movie_2: Movie, rating_matrix) 
     return cosine_similarity(movie_1_ratings, movie_2_ratings)
 
 
-def calculate_movie_similarity(movie_1: Movie, movie_2: Movie,
+def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: str = 'cosine',
                                rating_matrix: pd.DataFrame | None = _global_rating_matrix) -> float:
     """Calculate similarity between two movies based on similarity, genres, cast, and ratings."""
 
     # Calculate numerical feature similarity using cosine similarity
     numerical_features_1 = movie_1.to_feature_vector()
     numerical_features_2 = movie_2.to_feature_vector()
-    numerical_similarity = cosine_similarity(numerical_features_1, numerical_features_2)
 
-    # Calculate Jaccard similarity for genres
+    # Applying scaler for numerical features
+    scaler = MinMaxScaler()
+    scaled_features_1 = scaler.fit_transform([numerical_features_1])[0]
+    scaled_features_2 = scaler.fit_transform([numerical_features_2])[0]
+
+    # Calculate Jaccard similarity for genres, cast and directors
     genres_similarity = jaccard_similarity(set(movie_1.genres), set(movie_2.genres))
-
-    # Calculate Jaccard similarity for cast
     cast_similarity = jaccard_similarity(set(movie_1.cast), set(movie_2.cast))
+    directors_similarity = jaccard_similarity(set(movie_1.director), set(movie_2.director))
+
+    if metric == 'cosine':
+        numerical_similarity = cosine_similarity(scaled_features_1, scaled_features_2)
+    elif metric == 'manhattan':
+        numerical_similarity = manhattan_distance(scaled_features_1, scaled_features_2)
+    else:
+        numerical_similarity = cosine_similarity(scaled_features_1, scaled_features_2)
 
     # Calculate rating similarity if ratings_matrix is provided
     ratings_similarity: float | None = None
@@ -44,9 +56,10 @@ def calculate_movie_similarity(movie_1: Movie, movie_2: Movie,
 
     # Combine all similarities with adjusted weights
     total_similarity = (
-            (6 / 9) * numerical_similarity
-            + (1 / 9) * genres_similarity
-            + (1 / 9) * cast_similarity
-            + (1 / 9) * ratings_similarity
+            (7 / 11) * numerical_similarity
+            + (1 / 11) * genres_similarity
+            + (1 / 11) * cast_similarity
+            + (1 / 11) * directors_similarity
+            + (1 / 11) * ratings_similarity
     )
     return total_similarity

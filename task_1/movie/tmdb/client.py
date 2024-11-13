@@ -44,6 +44,7 @@ def _map_response_to_movie(movie_id: int, movie_data: dict) -> Movie:
         vote_average=movie_data['vote_average'],
         vote_count=movie_data['vote_count'],
         cast=[actor['name'] for actor in movie_data['credits']['cast']],
+        director=[member['name'] for member in movie_data['credits']['crew'] if member['job'] == 'Director'],
     )
 
 
