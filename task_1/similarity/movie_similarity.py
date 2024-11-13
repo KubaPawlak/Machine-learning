@@ -6,8 +6,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from data.movie import train
 from task_1.movie import Movie
-from .vector import cosine_similarity, euclidean_similarity, manhattan_similarity
 from .set import jaccard_similarity
+from .vector import cosine_similarity, euclidean_similarity, manhattan_similarity
 
 scaler = MinMaxScaler()
 
@@ -32,7 +32,9 @@ def _calculate_rating_similarity(movie_1: Movie, movie_2: Movie, rating_matrix) 
     # Calculate cosine similarity for ratings
     return cosine_similarity(movie_1_ratings, movie_2_ratings)
 
+
 type VectorSimilarity = Literal['cosine', 'mahattan', 'euclidean']
+
 
 def calculate_movie_similarity(movie_1: Movie, movie_2: Movie, metric: VectorSimilarity = 'cosine',
                                rating_matrix: pd.DataFrame | None = _global_rating_matrix,

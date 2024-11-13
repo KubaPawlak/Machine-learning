@@ -1,8 +1,6 @@
-from cProfile import label
 from collections.abc import Callable
 
 import numpy as np
-from pyexpat import features
 
 from task_1.movie import Movie
 

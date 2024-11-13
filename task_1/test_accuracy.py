@@ -7,8 +7,6 @@ from sklearn.model_selection import train_test_split
 
 from data.movie import train as global_train
 from task_1.main import generate_predictions
-from task_1.movie.tmdb.client import Client
-from task_1.similarity import fit_scaler
 from task_1.similarity.movie_similarity import calculate_movie_similarity, create_rating_matrix
 
 NUM_RUNS = 3
@@ -53,6 +51,7 @@ def test_parameters(n_neighbors: int,
         scores.append(accuracy_score(y_true=test['Rating'], y_pred=predictions['Rating']))
 
     return float(np.average(np.array(scores)))
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
