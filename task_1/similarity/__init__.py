@@ -1,1 +1,1 @@
-from movie_similarity import calculate_movie_similarity
+from .movie_similarity import calculate_movie_similarity
