@@ -2,7 +2,7 @@ import graphviz
 from sklearn.tree import export_graphviz
 
 
-def visualize_decision_tree(dt_model, feature_names):
+def visualize_decision_tree(user_id, dt_model, feature_names):
     """
     Visualize the decision tree using Graphviz.
 
