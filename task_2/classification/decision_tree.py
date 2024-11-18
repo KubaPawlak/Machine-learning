@@ -1,7 +1,5 @@
 from collections import Counter
 import numpy as np
-from sklearn.model_selection import GridSearchCV
-
 
 # Decision Tree Classifier
 class DecisionTree:
