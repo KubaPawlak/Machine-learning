@@ -1,6 +1,8 @@
 from collections import Counter
 import numpy as np
 
+type Movie = dict[str, int | float | list[int] | list[str]]
+
 # Decision Tree Classifier
 class DecisionTree:
     def __init__(self, max_depth=10, min_samples_split=2):
