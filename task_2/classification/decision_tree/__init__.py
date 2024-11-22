@@ -59,7 +59,7 @@ class DecisionTree:
             return Counter(y).most_common(1)[0][0]  # Return the most common label
 
         left_X, right_X, left_y, right_y = self._split_dataset(X, y, feature, threshold)
-        return {
+        return { # todo: replace this dict with `Choice` class, to enable not only numerical features
             "feature": feature,
             "threshold": threshold,
             "left": self._build_tree(left_X, left_y, depth + 1),
