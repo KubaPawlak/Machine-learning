@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 from data.movie import train
-from task_1.movie import Movie
+from movie import Movie
 from .set import jaccard_similarity
 from .vector import cosine_similarity, euclidean_similarity, manhattan_similarity
 

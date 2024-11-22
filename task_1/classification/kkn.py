@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-from task_1.movie import Movie
+from movie import Movie
 
 
 class KNeighborsClassifier:

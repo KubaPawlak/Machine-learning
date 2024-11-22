@@ -8,7 +8,7 @@ from pickle import dump, load
 import requests
 
 from data.movie import movies
-from task_1.movie import Movie
+from movie import Movie
 
 _CACHE_PATH = Path(__file__).parent / 'response_cache.pkl'
 

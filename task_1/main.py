@@ -3,8 +3,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 from task_1.classification import KNeighborsClassifier
-from task_1.movie import Movie
-from task_1.movie.tmdb.client import Client
+from movie import Movie
+from movie.tmdb.client import Client
 from task_1.similarity import calculate_movie_similarity, fit_scaler
 
 _RESULT_FILE = Path('task_1_result.csv').absolute()
