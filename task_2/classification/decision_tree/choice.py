@@ -1,6 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import TypedDict
 
 from . import Movie
+
+
+class SplitResult(TypedDict):
+    movies_passed: list[Movie]
+    movies_failed: list[Movie]
+    features_passed: list[int]
+    features_failed: list[int]
 
 
 class Choice(ABC):
@@ -15,6 +23,28 @@ class Choice(ABC):
     @abstractmethod
     def __str__(self):
         pass
+
+    def split(self, movies: list[Movie], features: list[int]) -> SplitResult:
+        """Splits the list of movies into those which pass/fail the test respectively"""
+        movies_passed = []
+        movies_failed = []
+        features_passed = []
+        features_failed = []
+
+        for movie, feature in zip(movies, features):
+            if self.test(movie):
+                movies_passed.append(movie)
+                features_passed.append(feature)
+            else:
+                movies_failed.append(movie)
+                features_failed.append(feature)
+
+        return {
+            "movies_passed": movies_passed,
+            "movies_failed": movies_failed,
+            "features_passed": features_passed,
+            "features_failed": features_failed,
+        }
 
 
 class ScalarChoice(Choice):

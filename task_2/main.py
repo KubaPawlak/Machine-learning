@@ -43,8 +43,9 @@ def main():
     # Save results
     logging.info("Saving results to CSV...")
     try:
-        task.to_csv("task_with_predictions.csv", index=False)
-        logging.info("Results saved successfully to 'task_with_predictions.csv'.")
+        path = "task_with_predictions.csv"
+        task.to_csv(path, index=False)
+        logging.info(f"Results saved successfully to {path}.")
     except Exception as e:
         logging.error(f"Error saving results: {e}")
         return
