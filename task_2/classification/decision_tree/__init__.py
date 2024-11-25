@@ -1,6 +1,7 @@
 import numpy as np
 
-from task_2.classification.decision_tree.choice import Choice, SplitResult
+from task_2.classification.decision_tree.choice import Choice, SplitResult, ScalarChoice, CategoricalChoice, \
+    SetContainsChoice
 
 type Movie = dict[str, int | float | list[int] | list[str]]
 
@@ -41,19 +42,53 @@ class DecisionTree:
     @staticmethod
     def _find_best_choice(movies: list[Movie], labels: list[int]) -> Choice:
         """Find the best feature and threshold to split on."""
-        # todo: Create list of all possible choices
         possible_choices: list[Choice] = []
 
+        for feature_name in movies[0].keys():
+            unique_values = set(movie[feature_name] for movie in movies)
+
+            # Scalar features (e.g. budget)
+            if isinstance(next(iter(unique_values)), (int, float)):
+                for threshold in unique_values:
+                    possible_choices.append(ScalarChoice(feature_name, threshold))
+
+            # Categorical features (e.g. genres)
+            elif isinstance(next(iter(unique_values)), str):
+                for value in unique_values:
+                    possible_choices.append(CategoricalChoice(feature_name, value))
+
+            # Multivalued features (e.g. cast)
+            elif isinstance(next(iter(unique_values)), list):
+                for value in unique_values:
+                    possible_choices.append(SetContainsChoice(feature_name, value))
+
         def rate_split(split: SplitResult) -> float:
-            """Calculates the rating of how good a split is. Bigger value = better split."""
-            pass  # todo: implement rate_split
+            """Calculates the rating of how good a split is. Higher value = better split."""
+            total_count = len(split['labels_passed']) + len(split['labels_failed'])
+
+            if total_count == 0:
+                return 0  # Avoid division by zero
+
+            gini_passed = _gini_impurity(split['labels_passed'])
+            gini_failed = _gini_impurity(split['labels_failed'])
+
+            # Calculate weighted Gini impurity for the split
+            weighted_impurity = (
+                    (len(split['labels_passed']) / total_count) * gini_passed +
+                    (len(split['labels_failed']) / total_count) * gini_failed
+            )
+
+            # Return 1 - weighted impurity to ensure higher values indicate better splits
+            return 1 - weighted_impurity
 
         def rate_choice(c: Choice) -> float:
             split = c.split(movies, labels)
             return rate_split(split)
 
+        # Evaluate each possible choice and find the best one
         choice_ratings = list(map(rate_choice, possible_choices))
         best_choice_idx = np.argmax(choice_ratings)
+
         return possible_choices[best_choice_idx]
 
     def fit(self, movies: list[Movie], labels: list[int]) -> None:

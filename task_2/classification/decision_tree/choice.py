@@ -65,7 +65,7 @@ class ScalarChoice(Choice):
         return f"ScalarChoice({self.feature_name}, {self.value})"
 
 
-class CaregoricalChoice(Choice):
+class CategoricalChoice(Choice):
     """Choice made on categorical features (e.g. language).
     Returns true if the feature is the same as tested value."""
 
@@ -80,7 +80,7 @@ class CaregoricalChoice(Choice):
         return f"{self.feature_name} = {self.value}"
 
     def __repr__(self):
-        return f"CaregoricalChoice({self.feature_name}, {self.value})"
+        return f"CategoricalChoice({self.feature_name}, {self.value})"
 
 
 class SetContainsChoice(Choice):
