@@ -3,19 +3,22 @@ import numpy as np
 
 type Movie = dict[str, int | float | list[int] | list[str]]
 
+
 # Decision Tree Classifier
+def _gini_impurity(y):
+    """Calculate Gini Impurity."""
+    classes, counts = np.unique(y, return_counts=True)
+    probs = counts / counts.sum()
+    return 1 - np.sum(probs ** 2)
+
+
 class DecisionTree:
     def __init__(self, max_depth=10, min_samples_split=2):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.tree = None
 
-    def _gini_impurity(self, y):
-        """Calculate Gini Impurity."""
-        classes, counts = np.unique(y, return_counts=True)
-        probs = counts / counts.sum()
-        return 1 - np.sum(probs ** 2)
-
+    # todo: delegate this to the choice object
     def _split_dataset(self, X, y, feature_index, threshold):
         """Split dataset based on feature and threshold."""
         left_mask = X[:, feature_index] <= threshold
@@ -25,7 +28,7 @@ class DecisionTree:
     def _find_best_split(self, X, y):
         """Find the best feature and threshold to split on."""
         best_feature, best_threshold = None, None
-        best_impurity = float("inf")
+        best_impurity = np.inf
         n_samples, n_features = X.shape
 
         for feature_index in range(n_features):
@@ -39,8 +42,8 @@ class DecisionTree:
                 left_weight = len(y_left) / n_samples
                 right_weight = len(y_right) / n_samples
                 impurity = (
-                    left_weight * self._gini_impurity(y_left)
-                    + right_weight * self._gini_impurity(y_right)
+                    left_weight * _gini_impurity(y_left)
+                    + right_weight * _gini_impurity(y_right)
                 )
 
                 if impurity < best_impurity:
