@@ -1,5 +1,6 @@
-from collections import Counter
 import numpy as np
+
+from task_2.classification.decision_tree.choice import Choice, SplitResult
 
 type Movie = dict[str, int | float | list[int] | list[str]]
 
@@ -13,75 +14,80 @@ def _gini_impurity(y):
 
 
 class DecisionTree:
-    def __init__(self, max_depth=10, min_samples_split=2):
+    def __init__(self, max_depth=10):
         self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
-        self.tree = None
+        self.is_fitted: bool = False
+        # if choice node:
+        self.choice: Choice | None = None
+        self.child_success: DecisionTree | None = None
+        self.child_fail: DecisionTree | None = None
+        # if leaf node:
+        self.leaf_value: int | None = None
 
-    # todo: delegate this to the choice object
-    def _split_dataset(self, X, y, feature_index, threshold):
-        """Split dataset based on feature and threshold."""
-        left_mask = X[:, feature_index] <= threshold
-        right_mask = X[:, feature_index] > threshold
-        return X[left_mask], X[right_mask], y[left_mask], y[right_mask]
-
-    def _find_best_split(self, X, y):
-        """Find the best feature and threshold to split on."""
-        best_feature, best_threshold = None, None
-        best_impurity = np.inf
-        n_samples, n_features = X.shape
-
-        for feature_index in range(n_features):
-            thresholds = np.unique(X[:, feature_index])
-            for threshold in thresholds:
-                _, _, y_left, y_right = self._split_dataset(X, y, feature_index, threshold)
-                if len(y_left) == 0 or len(y_right) == 0:
-                    continue
-
-                # Weighted impurity
-                left_weight = len(y_left) / n_samples
-                right_weight = len(y_right) / n_samples
-                impurity = (
-                    left_weight * _gini_impurity(y_left)
-                    + right_weight * _gini_impurity(y_right)
-                )
-
-                if impurity < best_impurity:
-                    best_impurity = impurity
-                    best_feature = feature_index
-                    best_threshold = threshold
-        return best_feature, best_threshold
-
-    def _build_tree(self, X, y, depth):
-        """Recursively build the decision tree."""
-        if len(np.unique(y)) == 1 or len(y) < self.min_samples_split or depth == self.max_depth:
-            return Counter(y).most_common(1)[0][0]  # Return the most common label
-
-        feature, threshold = self._find_best_split(X, y)
-        if feature is None:
-            return Counter(y).most_common(1)[0][0]  # Return the most common label
-
-        left_X, right_X, left_y, right_y = self._split_dataset(X, y, feature, threshold)
-        return { # todo: replace this dict with `Choice` class, to enable not only numerical features
-            "feature": feature,
-            "threshold": threshold,
-            "left": self._build_tree(left_X, left_y, depth + 1),
-            "right": self._build_tree(right_X, right_y, depth + 1),
-        }
-
-    def fit(self, X, y):
-        self.tree = self._build_tree(X, y, depth=0)
-
-    def _predict(self, x, tree):
-        """Traverse the tree for a prediction."""
-        if not isinstance(tree, dict):
-            return tree
-
-        feature, threshold = tree["feature"], tree["threshold"]
-        if x[feature] <= threshold:
-            return self._predict(x, tree["left"])
+    def ensure_valid(self) -> None:
+        """Ensures that the tree has valid structure.
+        The tree must be either a leaf node, or a choice node"""
+        if not self.is_fitted:
+            # Cannot determine if is invalid before fitting
+            return
+        if self.leaf_value is None:
+            # must be a choice node
+            assert self.choice is not None, "Choice cannot be None in non-leaf node"
+            assert self.child_success is not None and self.child_fail is not None, "Choice node must have children"
         else:
-            return self._predict(x, tree["right"])
+            assert self.choice is None, "Choice must be None in leaf node"
+            assert self.child_success is not None and self.child_fail is not None, "Leaf node cannot have children"
 
-    def predict(self, X):
-        return np.array([self._predict(x, self.tree) for x in X])
+    @staticmethod
+    def _find_best_choice(movies: list[Movie], labels: list[int]) -> Choice:
+        """Find the best feature and threshold to split on."""
+        # todo: Create list of all possible choices
+        possible_choices: list[Choice] = []
+
+        def rate_split(split: SplitResult) -> float:
+            """Calculates the rating of how good a split is. Bigger value = better split."""
+            pass  # todo: implement rate_split
+
+        def rate_choice(c: Choice) -> float:
+            split = c.split(movies, labels)
+            return rate_split(split)
+
+        choice_ratings = list(map(rate_choice, possible_choices))
+        best_choice_idx = np.argmax(choice_ratings)
+        return possible_choices[best_choice_idx]
+
+    def fit(self, movies: list[Movie], labels: list[int]) -> None:
+        assert self.max_depth >= 1, "max_depth must be at least 1"
+
+        if len(np.unique(labels)) == 1:
+            # all the movies have the same rating
+            self.leaf_value = int(labels[0])
+
+        elif self.max_depth == 1:  # must be leaf node, because we have run out of depth
+            most_frequent = np.argmax(np.bincount(labels)).item()
+            self.leaf_value = most_frequent
+
+        else:  # make split to best separate different labels
+            self.choice = DecisionTree._find_best_choice(movies, labels)
+            split_dataset = self.choice.split(movies, labels)
+            # Create and fit child trees
+            self.child_success = DecisionTree(max_depth=self.max_depth - 1)
+            self.child_fail = DecisionTree(max_depth=self.max_depth - 1)
+            self.child_success.fit(split_dataset['movies_passed'], split_dataset['labels_passed'])
+            self.child_fail.fit(split_dataset['movies_failed'], split_dataset['labels_failed'])
+
+        self.ensure_valid()
+        self.is_fitted = True
+
+    def _predict_single(self, movie: Movie) -> int:
+        if self.leaf_value is not None:
+            return self.leaf_value
+
+        passed_check = self.choice.test(movie)
+        if passed_check:
+            return self.child_success._predict_single(movie)
+        else:
+            return self.child_fail._predict_single(movie)
+
+    def predict(self, movies: list[Movie]) -> list[int]:
+        return list(map(self._predict_single, movies))
