@@ -39,6 +39,8 @@ class Choice(ABC):
                 movies_failed.append(movie)
                 labels_failed.append(feature)
 
+        # print(f"Split: {len(movies_passed)} passed, {len(movies_failed)} failed")
+
         return {
             "movies_passed": movies_passed,
             "movies_failed": movies_failed,

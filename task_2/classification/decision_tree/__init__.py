@@ -99,12 +99,13 @@ class DecisionTree:
 
         def rate_choice(c: Choice) -> float:
             split = c.split(movies, labels)
+            # print(f"Evaluating choice: {c}, Split result: {split}")
             return rate_split(split)
 
         # Evaluate each possible choice and find the best one
         choice_ratings = list(map(rate_choice, possible_choices))
         best_choice_idx = np.argmax(choice_ratings)
-
+        # print(f"Best choice: {possible_choices[best_choice_idx]}")
         return possible_choices[best_choice_idx]
 
     def fit(self, movies: list[MovieDict] | list[Movie], labels: list[int]) -> None:
@@ -114,23 +115,28 @@ class DecisionTree:
         assert self.max_depth >= 1, "max_depth must be at least 1"
 
         if len(np.unique(labels)) == 1:
-            # all the movies have the same rating
+            # All movies have the same label
             self.leaf_value = int(labels[0])
-
-        elif self.max_depth == 1:  # must be leaf node, because we have run out of depth
+        elif self.max_depth == 1:
+            # Must be a leaf node because we have run out of depth
             most_frequent = np.argmax(np.bincount(labels)).item()
             self.leaf_value = most_frequent
-
-        else:  # make split to best separate different labels
+        else:
+            # Attempt to find the best choice for splitting
             self.choice = DecisionTree._find_best_choice(movies, labels)
             split_dataset = self.choice.split(movies, labels)
-            assert len(split_dataset['movies_passed']) > 0 and len(
-                split_dataset['movies_failed']) > 0, "Split must split"
-            # Create and fit child trees
-            self.child_success = DecisionTree(max_depth=self.max_depth - 1)
-            self.child_fail = DecisionTree(max_depth=self.max_depth - 1)
-            self.child_success.fit(split_dataset['movies_passed'], split_dataset['labels_passed'])
-            self.child_fail.fit(split_dataset['movies_failed'], split_dataset['labels_failed'])
+
+            # Check if the split is valid
+            if len(split_dataset['movies_passed']) == 0 or len(split_dataset['movies_failed']) == 0:
+                # If the split is not valid, fallback to creating a leaf node
+                most_frequent = np.argmax(np.bincount(labels)).item()
+                self.leaf_value = most_frequent
+            else:
+                # Create and fit child trees
+                self.child_success = DecisionTree(max_depth=self.max_depth - 1)
+                self.child_fail = DecisionTree(max_depth=self.max_depth - 1)
+                self.child_success.fit(split_dataset['movies_passed'], split_dataset['labels_passed'])
+                self.child_fail.fit(split_dataset['movies_failed'], split_dataset['labels_failed'])
 
         self.ensure_valid()
         self.is_fitted = True
