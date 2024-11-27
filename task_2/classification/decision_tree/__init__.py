@@ -1,3 +1,5 @@
+from os.path import split
+
 import numpy as np
 
 from movie import Movie
@@ -105,6 +107,8 @@ class DecisionTree:
         return possible_choices[best_choice_idx]
 
     def fit(self, movies: list[MovieDict] | list[Movie], labels: list[int]) -> None:
+        assert len(movies) == len(labels), "Movies and labels must have same length"
+        assert len(movies) > 0, "Attempt to fit to an empty movie list"
         movies: list[MovieDict] = _as_dict(movies)
         assert self.max_depth >= 1, "max_depth must be at least 1"
 
@@ -119,6 +123,7 @@ class DecisionTree:
         else:  # make split to best separate different labels
             self.choice = DecisionTree._find_best_choice(movies, labels)
             split_dataset = self.choice.split(movies, labels)
+            assert len(split_dataset['movies_passed']) > 0 and len(split_dataset['movies_failed']) > 0, "Split must split"
             # Create and fit child trees
             self.child_success = DecisionTree(max_depth=self.max_depth - 1)
             self.child_fail = DecisionTree(max_depth=self.max_depth - 1)

@@ -1,4 +1,5 @@
 import logging
+from random import random
 from typing import Callable
 
 import numpy as np
@@ -17,8 +18,8 @@ class _RandomFeatureSelector:
         "title",
         "budget",
         "genres",
-        "popularity"
-        "release_year"
+        "popularity",
+        "release_year",
         "revenue",
         "runtime",
         "vote_average",
@@ -29,7 +30,7 @@ class _RandomFeatureSelector:
 
     def __init__(self, num_features: int):
         self.num_features = num_features
-        self.selected_features = np.random.choice(self._movie_features, self.num_features, replace=False)
+        self.selected_features = np.random.choice(list(self._movie_features), self.num_features, replace=False)
 
     def transform(self, movie: Movie) -> MovieDict:
         all_features = movie.__dict__
@@ -61,11 +62,12 @@ class RandomForestClassifier:
         movies_with_ratings: list[(Movie, int)] = list(zip(movies, ratings))
 
         bootstraps = []
+        random_generator: np.random.Generator = np.random.default_rng()
         for _ in range(self.num_trees):
-            selected_movies = np.random.choice(movies_with_ratings, num_movies, replace=True)
-            # noinspection PyTypeChecker
-            movies, ratings = tuple(map(list, zip(*selected_movies)))  # convert list of tuples into tuple of lists
-            movies = self._select_random_features(movies)
+            selected_movies = random_generator.choice(movies_with_ratings, num_movies, replace=True, axis=0)
+            movies: list[Movie] = selected_movies[:,0].tolist()
+            ratings: list[int] = selected_movies[:,1].tolist() # convert list of tuples into tuple of lists
+            movies: list[MovieDict] = self._select_random_features(movies)
             bootstrap = (movies, ratings)
             bootstraps.append(bootstrap)
 
