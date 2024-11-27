@@ -88,7 +88,7 @@ class RandomForestClassifier:
         return result
 
     def _predict_single(self, movie: Movie) -> int:
-        predictions = list(map(lambda tree: tree.predict([movie.__dict__]), self.trees))
+        predictions: list[int] = list(map(lambda tree: tree.predict([movie]), self.trees))
         return self._aggregate_predictions(predictions)
 
     def predict(self, movies: list[Movie]) -> list[int]:

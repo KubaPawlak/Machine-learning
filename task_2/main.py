@@ -1,12 +1,13 @@
 import logging
 
 from data.movie import train, task
+from movie import Movie
 from task_2.classification.decision_tree import DecisionTree
 
 logging.basicConfig(level=logging.INFO)
 
-def main():
 
+def main():
     # Preprocess data
     logging.info("Preprocessing data...")
     try:
@@ -17,6 +18,7 @@ def main():
         task.fillna(-1, inplace=True)  # Placeholder for predictions
         X_task = task.drop(["Rating"], axis=1).values
         logging.info("Data preprocessing completed successfully.")
+        assert all(map(lambda m: isinstance(m, Movie), X_train)), "X_train does not contain objects of type Movie"
     except Exception as e:
         logging.error(f"Error in data preprocessing: {e}")
         return
@@ -24,7 +26,7 @@ def main():
     # Train Decision Tree
     logging.info("Training Decision Tree model...")
     try:
-        tree = DecisionTree(max_depth=10, min_samples_split=2)
+        tree = DecisionTree(max_depth=10)
         tree.fit(X_train, y_train)
         logging.info("Decision Tree model trained successfully.")
     except Exception as e:

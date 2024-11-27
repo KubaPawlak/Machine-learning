@@ -1,9 +1,9 @@
 import numpy as np
 
+from movie import Movie
 from task_2.classification.decision_tree.choice import Choice, SplitResult, ScalarChoice, CategoricalChoice, \
     SetContainsChoice
-
-from ._movie import MovieDict as Movie
+from ._movie import MovieDict
 
 
 # Decision Tree Classifier
@@ -12,6 +12,18 @@ def _gini_impurity(y):
     classes, counts = np.unique(y, return_counts=True)
     probs = counts / counts.sum()
     return 1 - np.sum(probs ** 2)
+
+
+def _as_dict(movies: list[Movie] | list[MovieDict] | Movie | MovieDict):
+    if isinstance(movies, list):
+        if isinstance(movies[0], Movie):
+            return list(map(lambda m: m.__dict__, movies))
+        return movies
+    else:
+        movie = movies
+        if isinstance(movie, Movie):
+            return movie.__dict__
+        return movie
 
 
 class DecisionTree:
@@ -40,7 +52,7 @@ class DecisionTree:
             assert self.child_success is not None and self.child_fail is not None, "Leaf node cannot have children"
 
     @staticmethod
-    def _find_best_choice(movies: list[Movie], labels: list[int]) -> Choice:
+    def _find_best_choice(movies: list[MovieDict], labels: list[int]) -> Choice:
         """Find the best feature and threshold to split on."""
         possible_choices: list[Choice] = []
 
@@ -91,7 +103,8 @@ class DecisionTree:
 
         return possible_choices[best_choice_idx]
 
-    def fit(self, movies: list[Movie], labels: list[int]) -> None:
+    def fit(self, movies: list[MovieDict] | list[Movie], labels: list[int]) -> None:
+        movies: list[MovieDict] = _as_dict(movies)
         assert self.max_depth >= 1, "max_depth must be at least 1"
 
         if len(np.unique(labels)) == 1:
@@ -114,7 +127,9 @@ class DecisionTree:
         self.ensure_valid()
         self.is_fitted = True
 
-    def _predict_single(self, movie: Movie) -> int:
+    def _predict_single(self, movie: Movie | MovieDict) -> int:
+        movie: MovieDict = _as_dict(movie)
+
         if self.leaf_value is not None:
             return self.leaf_value
 
