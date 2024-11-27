@@ -11,6 +11,8 @@ from task_1.similarity.movie_similarity import calculate_movie_similarity, creat
 
 NUM_RUNS = 3
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def test_parameters(n_neighbors: int,
                     metric: str,
@@ -24,7 +26,7 @@ def test_parameters(n_neighbors: int,
 
     scores = []
     for i in range(NUM_RUNS):
-        logging.info("Running iteration %i", i + 1)
+        logger.info("Running iteration %i", i + 1)
         train, test = train_test_split(global_train, test_size=0.1, train_size=0.4)
         train: pd.DataFrame
         test: pd.DataFrame

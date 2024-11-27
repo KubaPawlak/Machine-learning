@@ -30,6 +30,8 @@ def _save_response_cache():
 _response_cache: dict[int, str] = _load_response_cache()
 atexit.register(_save_response_cache)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def _map_response_to_movie(movie_id: int, movie_data: dict) -> Movie:
     return Movie(
@@ -57,13 +59,13 @@ class Client:
         if token is None:
             token = getenv("TMDB_READ_ACCESS_TOKEN")
         if token is None:
-            logging.warning("TMDB_READ_ACCESS_TOKEN environment variable is not set. Will fail if movie is not cached.")
+            logger.warning("TMDB_READ_ACCESS_TOKEN environment variable is not set. Will fail if movie is not cached.")
 
         self.token: str | None = token
 
     def _call_api(self, movie_id: int) -> str:
         if self.token is None:
-            logging.error("TMDB_READ_ACCESS_TOKEN environment variable is not set")
+            logger.error("TMDB_READ_ACCESS_TOKEN environment variable is not set")
             raise RuntimeError("TMDB_READ_ACCESS_TOKEN is not set")
 
         tmdb_id = _lookup_tmdb_id(movie_id)
@@ -78,7 +80,7 @@ class Client:
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            logging.error(
+            logger.error(
                 f"TMDB api returned response with status code {response.status_code}, movie_id={tmdb_id}({movie_id}): {response.text}")
             raise RuntimeError(f"TMDB api invalid response: {response.text}")
 

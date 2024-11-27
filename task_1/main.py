@@ -12,15 +12,18 @@ import pandas as pd
 
 _tmdb_client = Client()
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 def generate_predictions(train: pd.DataFrame,
                          task: pd.DataFrame,
                          n_neighbors: int = 5,
                          similarity_fn: Callable[[Movie, Movie], float] = calculate_movie_similarity
                          ) -> pd.DataFrame:
-    logging.debug("Fetching movie data")
+    logger.debug("Fetching movie data")
     all_movies = [_tmdb_client.get_movie(movie_id) for movie_id in train['MovieID'].unique()]
-    logging.debug("Fitting scaler")
+    logger.debug("Fitting scaler")
     fit_scaler(all_movies)
 
     def distance_function(movie_1: Movie, movie_2: Movie) -> float:
@@ -31,7 +34,7 @@ def generate_predictions(train: pd.DataFrame,
 
     def predict_rating(row: pd.Series) -> int:
         user_id, movie_id = row['UserID'], row['MovieID']
-        logging.debug("Predicting rating for movie %i by user %i", movie_id, user_id)
+        logger.debug("Predicting rating for movie %i by user %i", movie_id, user_id)
 
         movie_to_predict = _tmdb_client.get_movie(movie_id)
 
@@ -41,15 +44,15 @@ def generate_predictions(train: pd.DataFrame,
         watched_movies: list[Movie] = [movie for movie in all_movies if
                                        movie.movie_id in watched_movies_ratings['MovieID'].values]
 
-        logging.debug("Generating prediction")
+        logger.debug("Generating prediction")
         predicted_rating = classifier.fit_predict(watched_movies, watched_movies_ratings['Rating'].to_numpy(),
                                                   movie_to_predict)
-        logging.debug("Predicted rating of movie %i by user %i: %i", movie_id, user_id, predicted_rating)
+        logger.debug("Predicted rating of movie %i by user %i: %i", movie_id, user_id, predicted_rating)
         return predicted_rating
 
     # end predict_rating
 
-    logging.info("Calculating predictions...")
+    logger.info("Calculating predictions...")
     # apply the prediction function to each row in the task dataframe
     predicted = task.apply(predict_rating, axis=1).astype(int)
 
@@ -75,7 +78,7 @@ def _main() -> None:
     task_with_predictions = generate_predictions(train, task)
 
     task_with_predictions.to_csv(_RESULT_FILE, index=False, sep=';')
-    logging.info("Written results file to %s", _RESULT_FILE)
+    logger.info("Written results file to %s", _RESULT_FILE)
 
 
 if __name__ == '__main__':
