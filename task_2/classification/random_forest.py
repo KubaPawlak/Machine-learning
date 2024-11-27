@@ -64,7 +64,7 @@ class RandomForestClassifier:
         for _ in range(self.num_trees):
             selected_movies = np.random.choice(movies_with_ratings, num_movies, replace=True)
             # noinspection PyTypeChecker
-            movies, ratings = tuple(map(list, zip(*movies_with_ratings)))  # convert list of tuples into tuple of lists
+            movies, ratings = tuple(map(list, zip(*selected_movies)))  # convert list of tuples into tuple of lists
             movies = self._select_random_features(movies)
             bootstrap = (movies, ratings)
             bootstraps.append(bootstrap)
