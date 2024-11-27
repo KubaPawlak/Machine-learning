@@ -5,7 +5,8 @@ import numpy as np
 
 from movie import Movie
 from .decision_tree import DecisionTree as Tree
-from .decision_tree import Movie as MovieDict
+# noinspection PyProtectedMember
+from .decision_tree._movie import MovieDict as MovieDict
 
 _logger = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ class RandomForestClassifier:
         return result
 
     def _predict_single(self, movie: Movie) -> int:
-        predictions = list(map(lambda tree: tree.predict([movie]), self.trees))
+        predictions = list(map(lambda tree: tree.predict([movie.__dict__]), self.trees))
         return self._aggregate_predictions(predictions)
 
     def predict(self, movies: list[Movie]) -> list[int]:

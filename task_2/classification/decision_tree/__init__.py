@@ -3,7 +3,7 @@ import numpy as np
 from task_2.classification.decision_tree.choice import Choice, SplitResult, ScalarChoice, CategoricalChoice, \
     SetContainsChoice
 
-type Movie = dict[str, int | float | list[int] | list[str]]
+from ._movie import MovieDict as Movie
 
 
 # Decision Tree Classifier

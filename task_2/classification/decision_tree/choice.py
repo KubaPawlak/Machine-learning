@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypedDict
 
-from . import Movie
+from ._movie import MovieDict as Movie
 
 
 class SplitResult(TypedDict):
