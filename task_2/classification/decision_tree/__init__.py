@@ -53,11 +53,12 @@ class DecisionTree:
 
     @staticmethod
     def _find_best_choice(movies: list[MovieDict], labels: list[int]) -> Choice:
-        """Find the best feature and threshold to split on."""
         possible_choices: list[Choice] = []
 
         for feature_name in movies[0].keys():
-            unique_values = set(movie[feature_name] for movie in movies)
+            unique_values = {
+                tuple(movie[feature_name]) if isinstance(movie[feature_name], list) else movie[feature_name] for movie
+                in movies}
 
             # Scalar features (e.g. budget)
             if isinstance(next(iter(unique_values)), (int, float)):
@@ -70,7 +71,7 @@ class DecisionTree:
                     possible_choices.append(CategoricalChoice(feature_name, value))
 
             # Multivalued features (e.g. cast)
-            elif isinstance(next(iter(unique_values)), list):
+            elif isinstance(next(iter(unique_values)), tuple):
                 for value in unique_values:
                     possible_choices.append(SetContainsChoice(feature_name, value))
 
