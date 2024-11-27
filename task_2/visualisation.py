@@ -1,5 +1,6 @@
 from .classification.decision_tree import DecisionTree
 
+
 def _visit_node(tree: DecisionTree) -> str:
     node_id = id(tree)
     if tree.leaf_value is not None:

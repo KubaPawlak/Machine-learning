@@ -1,5 +1,4 @@
 import logging
-from random import random
 from typing import Callable
 
 import numpy as np
@@ -65,8 +64,8 @@ class RandomForestClassifier:
         random_generator: np.random.Generator = np.random.default_rng()
         for _ in range(self.num_trees):
             selected_movies = random_generator.choice(movies_with_ratings, num_movies, replace=True, axis=0)
-            movies: list[Movie] = selected_movies[:,0].tolist()
-            ratings: list[int] = selected_movies[:,1].tolist() # convert list of tuples into tuple of lists
+            movies: list[Movie] = selected_movies[:, 0].tolist()
+            ratings: list[int] = selected_movies[:, 1].tolist()  # convert list of tuples into tuple of lists
             movies: list[MovieDict] = self._select_random_features(movies)
             bootstrap = (movies, ratings)
             bootstraps.append(bootstrap)
@@ -75,7 +74,7 @@ class RandomForestClassifier:
 
     def _fit_tree(self, bootstrap: Bootstrap) -> Tree:
         movies, ratings = bootstrap
-        tree = Tree(*self.tree_args)
+        tree = Tree(**self.tree_args)
         tree.fit(movies, ratings)
         return tree
 

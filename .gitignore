@@ -4,6 +4,9 @@
 venv/
 .venv/
 
+submission/
+submission*.csv
+
 .DS_Store
 
 .env

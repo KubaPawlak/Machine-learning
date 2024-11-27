@@ -1,5 +1,3 @@
-from os.path import split
-
 import numpy as np
 
 from movie import Movie
@@ -126,7 +124,8 @@ class DecisionTree:
         else:  # make split to best separate different labels
             self.choice = DecisionTree._find_best_choice(movies, labels)
             split_dataset = self.choice.split(movies, labels)
-            assert len(split_dataset['movies_passed']) > 0 and len(split_dataset['movies_failed']) > 0, "Split must split"
+            assert len(split_dataset['movies_passed']) > 0 and len(
+                split_dataset['movies_failed']) > 0, "Split must split"
             # Create and fit child trees
             self.child_success = DecisionTree(max_depth=self.max_depth - 1)
             self.child_fail = DecisionTree(max_depth=self.max_depth - 1)
