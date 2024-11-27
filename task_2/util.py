@@ -57,6 +57,10 @@ class SubmissionGenerator(ABC):
             self.logger.info(f"Generated {len(predictions)} predictions for user {user_id}")
 
         assert task['Rating'].isna().sum() == 0, "There are still unpredicted movies in task"
+
+        # cast the ratings to integer
+        task['Rating'] = task['Rating'].astype(int)
+
         if self.submission_path.exists():
             self.logger.warning(f"Submission file already exists at {self.submission_path}. It will be overwritten.")
         if not submission_dir.exists():
