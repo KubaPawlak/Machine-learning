@@ -58,6 +58,9 @@ class DecisionTree:
         possible_choices: list[Choice] = []
 
         for feature_name in movies[0].keys():
+            if feature_name == 'title':
+                # this feature uniquely identifies each movie, it is useless for generalization
+                continue
             unique_values = {
                 tuple(movie[feature_name]) if isinstance(movie[feature_name], list) else movie[feature_name] for movie
                 in movies}

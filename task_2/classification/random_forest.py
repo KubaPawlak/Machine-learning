@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 class _RandomFeatureSelector:
     _movie_features = {
         "movie_id",
-        "title",
+        # "title",  # this is not a valid choice, because it uniquely defines a movie and thus is useless for generalization
         "budget",
         "genres",
         "popularity",
