@@ -1,6 +1,11 @@
 import logging
 from pathlib import Path
+from typing import Iterable
+
+import pandas as pd
+
 from data.movie import train, task
+from movie import Movie
 from movie.tmdb.client import Client
 from task_2.classification.decision_tree import DecisionTree
 
@@ -8,14 +13,15 @@ logging.basicConfig(level=logging.INFO)
 tmdb_client = Client()
 _RESULT_FILE = Path('submission_tree.csv').absolute()
 
-def get_movie_features(tmdb_client, unique_movie_ids):
+
+def get_movie_features(unique_movie_ids: Iterable[int]) -> dict[int, Movie]:
     movie_features = {movie_id: tmdb_client.get_movie(movie_id) for movie_id in unique_movie_ids}
     return movie_features
 
 
-def train_decision_tree(train_data, movie_features):
-    train_movies = [movie_features[movie_id] for movie_id in train_data["MovieID"]]
-    train_ratings = train_data["Rating"].tolist()
+def train_decision_tree(train_data: pd.DataFrame, movie_features: dict[int, Movie]) -> DecisionTree:
+    train_movies: list[Movie] = [movie_features[movie_id] for movie_id in train_data["MovieID"]]
+    train_ratings: list[int] = train_data["Rating"].tolist()
 
     decision_tree = DecisionTree(max_depth=10)
     decision_tree.fit(train_movies, train_ratings)
@@ -23,14 +29,14 @@ def train_decision_tree(train_data, movie_features):
     return decision_tree
 
 
-def predict_ratings(task_data, movie_features, decision_tree):
+def predict_ratings(task_data: pd.DataFrame, movie_features: dict[int, Movie], classifier: DecisionTree):
     task_movies = [movie_features[movie_id] for movie_id in task_data["MovieID"]]
-    predicted_ratings = decision_tree.predict(task_movies)
+    predicted_ratings = classifier.predict(task_movies)
     logging.info(f"Predicted ratings for {len(task_data)} task entries.")
     return predicted_ratings
 
 
-def prepare_submission_rows(task_data, predicted_ratings):
+def prepare_submission_rows(task_data: pd.DataFrame, predicted_ratings: list[int]):
     submission_rows = []
     for row, predicted_rating in zip(task_data.itertuples(), predicted_ratings):
         submission_rows.append(f"{int(row.ID)};{int(row.UserID)};{int(row.MovieID)};{int(predicted_rating)}")
@@ -46,7 +52,7 @@ def save_submission(submission_rows):
 
 def main():
     unique_movie_ids = train["MovieID"].unique()
-    movie_features = get_movie_features(tmdb_client, unique_movie_ids)
+    movie_features = get_movie_features(unique_movie_ids)
     submission_rows = []
 
     for user_id in task["UserID"].unique():
@@ -58,6 +64,7 @@ def main():
         submission_rows.extend(user_submission_rows)
 
     save_submission(submission_rows)
+
 
 if __name__ == "__main__":
     main()
