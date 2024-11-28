@@ -1,18 +1,18 @@
 import logging
 
 from movie import Movie
-from task_2.classification.decision_tree import DecisionTree
 from task_2.classification.random_forest import RandomForestClassifier
 from task_2.util import SubmissionGenerator
 
 
 class RandomForestSubmissionGenerator(SubmissionGenerator):
-    def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) -> DecisionTree | RandomForestClassifier:
+    def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) ->  RandomForestClassifier:
         tree = RandomForestClassifier(num_trees=10, num_features=3, max_depth=10)
         tree.fit(movies, labels)
         return tree
 
-    def predict(self, classifier: DecisionTree | RandomForestClassifier, movies: list[Movie]) -> list[int]:
+    def predict(self, classifier: RandomForestClassifier, movies: list[Movie]) -> list[int]:
+        assert isinstance(classifier, RandomForestClassifier)
         return classifier.predict(movies)
 
 

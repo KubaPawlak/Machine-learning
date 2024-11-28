@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 from data.movie import train, task as task_data
@@ -30,14 +29,13 @@ class SubmissionGenerator(ABC):
 
     def __init__(self, submission_file_name: str | None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
         if submission_file_name is None:
             self.logger.warning("Submission file not set. The results will not be saved!")
             self.submission_path = None
         else:
             assert submission_file_name.endswith('.csv'), "Submission file name must end with .csv"
             self.submission_path: pathlib.Path | None = submission_dir / submission_file_name
-        self.logger.setLevel(logging.DEBUG)
 
     @abstractmethod
     def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) -> DecisionTree | RandomForestClassifier:
@@ -86,21 +84,43 @@ class Validator:
         self.submission_generator = submission_generator
         self.num_runs = num_runs
 
+    @staticmethod
+    def calculate_metrics(y_true, y_pred) -> (float, float):
+        """Calculate the fraction of correct predictions, and one-off predictions"""
+        assert len(y_true) == len(y_pred), "y_true and y_pred must have same length"
+        correct_count = 0
+        one_off_count = 0
+        total_count = len(y_true)
+        for (true, pred) in zip(y_true, y_pred):
+            if true == pred:
+                correct_count += 1
+            elif abs(true - pred) == 1:
+                one_off_count += 1
+
+        return correct_count / total_count, one_off_count / total_count
+
     def run(self):
         accuracies = []
+        one_off_accuracies = []
+        num_users = train['UserID'].nunique()
         for i in range(self.num_runs):
             self.logger.info(f"Running iteration {i + 1}/{self.num_runs}")
             run_accuracies = []
-            for user_id in train['UserID'].unique():
+            run_one_off_accuracies = []
+            for j, user_id in enumerate(train['UserID'].unique()):
+                self.logger.debug(f"Running tests for user {user_id:<4} ({j + 1}/{num_users})")
                 movies, labels = get_training_data_for_user(user_id)
                 movies_train, movies_test, labels_train, labels_test = train_test_split(movies, labels)
 
                 classifier = self.submission_generator.create_fitted_classifier(movies_train, labels_train)
                 predictions = self.submission_generator.predict(classifier, movies_test)
 
-                accuracy = accuracy_score(labels_test, predictions)
+                accuracy, one_off_accuracy = Validator.calculate_metrics(labels_test, predictions)
                 run_accuracies.append(accuracy)
+                run_one_off_accuracies.append(one_off_accuracy)
 
             accuracies.append(np.mean(run_accuracies))
+            one_off_accuracies.append(np.mean(run_one_off_accuracies))
 
         print(f"Average accuracy: {np.mean(accuracies).round(2) * 100}%")
+        print(f"Average one-off accuracy: {np.mean(one_off_accuracies).round(2) * 100}%")
