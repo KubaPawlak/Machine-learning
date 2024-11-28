@@ -6,7 +6,7 @@ from task_2.classification.random_forest import RandomForestClassifier
 from task_2.util import SubmissionGenerator
 
 
-class DecisionTreeSubmissionGenerator(SubmissionGenerator):
+class RandomForestSubmissionGenerator(SubmissionGenerator):
     def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) -> DecisionTree | RandomForestClassifier:
         tree = RandomForestClassifier(num_trees=10, num_features=3, max_depth=10)
         tree.fit(movies, labels)
@@ -18,5 +18,5 @@ class DecisionTreeSubmissionGenerator(SubmissionGenerator):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    submission_generator = DecisionTreeSubmissionGenerator('submission_forest.csv')
+    submission_generator = RandomForestSubmissionGenerator('submission_forest.csv')
     submission_generator.run()

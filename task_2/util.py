@@ -81,23 +81,25 @@ class SubmissionGenerator(ABC):
 
 class Validator:
     def __init__(self, submission_generator: SubmissionGenerator, num_runs: int = 3):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.submission_generator = submission_generator
         self.num_runs = num_runs
 
     def run(self):
         accuracies = []
-        for _ in range(self.num_runs):
+        for i in range(self.num_runs):
+            self.logger.info(f"Running iteration {i + 1}/{self.num_runs}")
             run_accuracies = []
             for user_id in train['UserID'].unique():
                 movies, labels = get_training_data_for_user(user_id)
-                movies_train = train_test_split(movies, labels)
-                movies_train, movies_test, labels_train, labels_test = train_test_split(movies_train, labels)
+                movies_train, movies_test, labels_train, labels_test = train_test_split(movies, labels)
 
                 classifier = self.submission_generator.create_fitted_classifier(movies_train, labels_train)
                 predictions = self.submission_generator.predict(classifier, movies_test)
 
                 accuracy = accuracy_score(labels_test, predictions)
-                accuracies.append(accuracy)
+                run_accuracies.append(accuracy)
 
             accuracies.append(np.mean(run_accuracies))
 
