@@ -49,7 +49,9 @@ class SubmissionGenerator(ABC):
 
     def run(self):
         task: pd.DataFrame = task_data.copy()
-        for user_id in task['UserID'].unique():
+        num_users = train['UserID'].nunique()
+        for j, user_id in enumerate(train['UserID'].unique()):
+            self.logger.info(f"Running user {user_id:<4} ({j + 1}/{num_users})")
             movies, labels = get_training_data_for_user(user_id)
             self.logger.debug(f"Generating tree for user {user_id} from {len(movies)} movies")
             classifier = self.create_fitted_classifier(movies, labels)

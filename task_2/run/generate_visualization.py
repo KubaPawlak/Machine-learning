@@ -27,6 +27,8 @@ def _main():
 
     if DOT_FILE_PATH.exists():
         logger.warning("File %s already exists. It will be overwritten.", str(DOT_FILE_PATH))
+    else:
+        DOT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     DOT_FILE_PATH.write_text(dot)
     logger.info("Dot file successfully written to %s. Run 'dot -Tpng %s' to generate the image file.",

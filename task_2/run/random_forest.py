@@ -7,7 +7,7 @@ from task_2.util import SubmissionGenerator
 
 class RandomForestSubmissionGenerator(SubmissionGenerator):
     def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) ->  RandomForestClassifier:
-        tree = RandomForestClassifier(num_trees=10, num_features=3, max_depth=10)
+        tree = RandomForestClassifier(num_trees=10, num_features=3, max_depth=5)
         tree.fit(movies, labels)
         return tree
 
