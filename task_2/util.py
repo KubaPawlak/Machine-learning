@@ -2,7 +2,10 @@ import logging
 import pathlib
 from abc import ABC, abstractmethod
 
+import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 from data.movie import train, task as task_data
 from movie import Movie
@@ -67,3 +70,28 @@ class SubmissionGenerator(ABC):
             submission_dir.mkdir()
         task.to_csv(self.submission_path.absolute(), index=False, header=False, sep=';')
         self.logger.info(f"Successfully generated submission file at {self.submission_path}.")
+
+
+class Validator:
+    def __init__(self, submission_generator: SubmissionGenerator, num_runs: int = 3):
+        self.submission_generator = submission_generator
+        self.num_runs = num_runs
+
+    def run(self):
+        accuracies = []
+        for _ in range(self.num_runs):
+            run_accuracies = []
+            for user_id in train['UserID'].unique():
+                movies, labels = get_training_data_for_user(user_id)
+                movies_train = train_test_split(movies, labels)
+                movies_train, movies_test, labels_train, labels_test = train_test_split(movies_train, labels)
+
+                classifier = self.submission_generator.create_fitted_classifier(movies_train, labels_train)
+                predictions = self.submission_generator.predict(classifier, movies_test)
+
+                accuracy = accuracy_score(labels_test, predictions)
+                accuracies.append(accuracy)
+
+            accuracies.append(np.mean(run_accuracies))
+
+        print(f"Average accuracy: {np.mean(accuracies).round(2) * 100}%")
