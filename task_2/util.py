@@ -28,10 +28,15 @@ def get_training_data_for_user(user_id: int) -> (list[Movie], list[int]):
 
 class SubmissionGenerator(ABC):
 
-    def __init__(self, submission_file_name: str):
-        assert submission_file_name.endswith('.csv'), "Submission file name must end with .csv"
-        self.submission_path = submission_dir / submission_file_name
+    def __init__(self, submission_file_name: str | None):
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.INFO)
+        if submission_file_name is None:
+            self.logger.warning("Submission file not set. The results will not be saved!")
+            self.submission_path = None
+        else:
+            assert submission_file_name.endswith('.csv'), "Submission file name must end with .csv"
+            self.submission_path: pathlib.Path | None = submission_dir / submission_file_name
         self.logger.setLevel(logging.DEBUG)
 
     @abstractmethod
@@ -64,12 +69,14 @@ class SubmissionGenerator(ABC):
         # cast the ratings to integer
         task['Rating'] = task['Rating'].astype(int)
 
-        if self.submission_path.exists():
-            self.logger.warning(f"Submission file already exists at {self.submission_path}. It will be overwritten.")
-        if not submission_dir.exists():
-            submission_dir.mkdir()
-        task.to_csv(self.submission_path.absolute(), index=False, header=False, sep=';')
-        self.logger.info(f"Successfully generated submission file at {self.submission_path}.")
+        if self.submission_path is not None:
+            if self.submission_path.exists():
+                self.logger.warning(
+                    f"Submission file already exists at {self.submission_path}. It will be overwritten.")
+            if not submission_dir.exists():
+                submission_dir.mkdir()
+            task.to_csv(self.submission_path.absolute(), index=False, header=False, sep=';')
+            self.logger.info(f"Successfully generated submission file at {self.submission_path}.")
 
 
 class Validator:
