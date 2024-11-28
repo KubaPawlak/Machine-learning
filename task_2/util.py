@@ -1,6 +1,8 @@
 import logging
+import multiprocessing as mp
 import pathlib
 from abc import ABC, abstractmethod
+from itertools import repeat
 
 import numpy as np
 import pandas as pd
@@ -99,23 +101,50 @@ class Validator:
 
         return correct_count / total_count, one_off_count / total_count
 
-    def run(self):
+    def run_user(self, user_id):
+        movies, labels = get_training_data_for_user(user_id)
+        movies_train, movies_test, labels_train, labels_test = train_test_split(movies, labels)
+        classifier = self.submission_generator.create_fitted_classifier(movies_train, labels_train)
+        predictions = self.submission_generator.predict(classifier, movies_test)
+        accuracy, one_off_accuracy = Validator.calculate_metrics(labels_test, predictions)
+        return accuracy, one_off_accuracy
+
+    @staticmethod
+    def _user_func(validator, user_id: int):
+        validator.logger.debug(f"Running tests for user {user_id}")
+        result = validator.run_user(user_id)
+        validator.logger.debug(f"User {user_id} done")
+        return result
+
+    def run_parallel(self):
+        accuracies = []
+        one_off_accuracies = []
+
+        for i in range(self.num_runs):
+            self.logger.info(f"Running iteration {i + 1}/{self.num_runs}")
+            user_ids = list(train['UserID'].unique())
+            with mp.Pool(mp.cpu_count()) as pool:
+                results: list[(float, float)] = pool.starmap(Validator._user_func, zip(repeat(self), user_ids))
+            run_accuracies, run_one_off_accuracies = tuple(map(lambda x: list(x), zip(*results)))
+
+            accuracies.append(np.mean(run_accuracies))
+            one_off_accuracies.append(np.mean(run_one_off_accuracies))
+
+        print(f"Average accuracy: {np.mean(accuracies).round(2) * 100}%")
+        print(f"Average one-off accuracy: {np.mean(one_off_accuracies).round(2) * 100}%")
+
+    def run_sequential(self):
         accuracies = []
         one_off_accuracies = []
         num_users = train['UserID'].nunique()
         for i in range(self.num_runs):
+
             self.logger.info(f"Running iteration {i + 1}/{self.num_runs}")
             run_accuracies = []
             run_one_off_accuracies = []
             for j, user_id in enumerate(train['UserID'].unique()):
                 self.logger.debug(f"Running tests for user {user_id:<4} ({j + 1}/{num_users})")
-                movies, labels = get_training_data_for_user(user_id)
-                movies_train, movies_test, labels_train, labels_test = train_test_split(movies, labels)
-
-                classifier = self.submission_generator.create_fitted_classifier(movies_train, labels_train)
-                predictions = self.submission_generator.predict(classifier, movies_test)
-
-                accuracy, one_off_accuracy = Validator.calculate_metrics(labels_test, predictions)
+                accuracy, one_off_accuracy = self.run_user(user_id)
                 run_accuracies.append(accuracy)
                 run_one_off_accuracies.append(one_off_accuracy)
 
