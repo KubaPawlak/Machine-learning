@@ -7,7 +7,7 @@ from task_2.util import SubmissionGenerator
 
 class DecisionTreeSubmissionGenerator(SubmissionGenerator):
     def create_fitted_classifier(self, movies: list[Movie], labels: list[int]) -> DecisionTree:
-        tree = DecisionTree(max_depth=2)
+        tree = DecisionTree(max_depth=5)
         tree.fit(movies, labels)
         return tree
 
