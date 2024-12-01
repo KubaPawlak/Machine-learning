@@ -1,18 +1,20 @@
-from typing import Any
-
-import numpy as np
 import logging
 
-_similarity_cache: dict[(Any, Any),int] = dict()
+import numpy as np
+import pandas as pd
+
+_similarity_cache: dict[(int, int), int] = dict()
 
 logger = logging.getLogger(__name__)
+
 
 def clear_cache():
     global _similarity_cache
     _similarity_cache = dict()
     logger.debug("Similarity cache cleared")
 
-def similarity_function(user1, user2, min_common=3, pearson_weight=0.7):
+
+def similarity_function(user_1: pd.Series, user_2: pd.Series, min_common=3, pearson_weight=0.7):
     """
      Computes a similarity score between two users based on their movie ratings.
 
@@ -26,39 +28,39 @@ def similarity_function(user1, user2, min_common=3, pearson_weight=0.7):
      applied based on the number of common ratings to reduce the influence of users with fewer shared ratings.
 
      Parameters:
-         user1: Ratings given by the first user.
-         user2: Ratings given by the second user.
+         user_1: Ratings given by the first user.
+         user_2: Ratings given by the second user.
          min_common: Minimum number of common ratings required to compute similarity.
          pearson_weight: Weighting factor for the Pearson similarity in the final score.
      """
-    if (user1.name, user2.name) in _similarity_cache:
-        cached_value = _similarity_cache[(user1.name, user2.name)]
-        logger.debug(f"Similarity for users {user1.name}, {user2.name} retrieved from cache: {cached_value}")
+    if (cached_value := _similarity_cache.get((user_1.name, user_2.name)) or
+                        _similarity_cache.get((user_2.name, user_1.name))) is not None:
+        logger.debug(f"Similarity for users {user_1.name}, {user_2.name} retrieved from cache: {cached_value}")
         return cached_value
 
-    common_movies = ~user1.isna() & ~user2.isna()
+    common_movies = ~user_1.isna() & ~user_2.isna()
     common_count = common_movies.sum()
 
     if common_count < min_common:
-        _similarity_cache[(user1.name, user2.name)] = 0
+        _similarity_cache[(user_1.name, user_2.name)] = 0
         return 0  # Insufficient overlap
 
-    user1_common = user1[common_movies]
-    user2_common = user2[common_movies]
+    user_1_common = user_1[common_movies]
+    user_2_common = user_2[common_movies]
 
     # Mean-center the ratings
-    user1_centered = user1_common - user1_common.mean()
-    user2_centered = user2_common - user2_common.mean()
+    user_1_centered = user_1_common - user_1_common.mean()
+    user_2_centered = user_2_common - user_2_common.mean()
 
     # Pearson Similarity
-    numerator = (user1_centered * user2_centered).sum()
-    denominator = np.sqrt((user1_centered ** 2).sum()) * np.sqrt((user2_centered ** 2).sum())
+    numerator = (user_1_centered * user_2_centered).sum()
+    denominator = np.sqrt((user_1_centered ** 2).sum()) * np.sqrt((user_2_centered ** 2).sum())
 
     pearson_similarity = numerator / denominator if denominator != 0 else 0
 
     # Cosine Similarity
-    cosine_numerator = np.dot(user1_centered, user2_centered)
-    cosine_denominator = np.linalg.norm(user1_centered) * np.linalg.norm(user2_centered)
+    cosine_numerator = np.dot(user_1_centered, user_2_centered)
+    cosine_denominator = np.linalg.norm(user_1_centered) * np.linalg.norm(user_2_centered)
 
     cosine_similarity = cosine_numerator / cosine_denominator if cosine_denominator != 0 else 0
 
@@ -67,6 +69,6 @@ def similarity_function(user1, user2, min_common=3, pearson_weight=0.7):
     # Apply damping factor
     combined_similarity_score *= common_count / (common_count + 1)
 
-    _similarity_cache[(user1.name, user2.name)] = combined_similarity_score
-    logger.debug(f"Similarity for {user1.name} and {user2.name} calculated: {combined_similarity_score:.4f}")
+    _similarity_cache[(user_1.name, user_2.name)] = combined_similarity_score
+    logger.debug(f"Similarity for {user_1.name} and {user_2.name} calculated: {combined_similarity_score:.4f}")
     return combined_similarity_score
