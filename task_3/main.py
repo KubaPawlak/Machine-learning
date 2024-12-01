@@ -1,7 +1,7 @@
 from data.movie import train, task
-from task_3.cross_validation.cross_validation import kfold_cross_validation
-from task_3.prediction.prediction import predict_rating
-from task_3.similarity.similarity import similarity_function
+from task_3.cross_validation import kfold_cross_validation
+from task_3.prediction import predict_rating
+from task_3.similarity import similarity_function
 
 # Pivot table: rows = UserID, columns = MovieID, values = Rating
 rating_matrix = train.pivot(index='UserID', columns='MovieID', values='Rating')

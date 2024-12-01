@@ -4,8 +4,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from data.movie import train
-from task_3.prediction.prediction import predict_rating
-from task_3.similarity.similarity import similarity_function
+from task_3.prediction import predict_rating
+from task_3.similarity import similarity_function
 
 
 def split_data(train_data):

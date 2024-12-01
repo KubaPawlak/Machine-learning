@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.model_selection import KFold
 
-from task_3.prediction.prediction import predict_rating
+from task_3.prediction import predict_rating
 
 
 def kfold_cross_validation(data, similarity_func, similarity_cache, k=5):
