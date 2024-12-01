@@ -6,12 +6,10 @@ from task_3.similarity import similarity_function
 # Pivot table: rows = UserID, columns = MovieID, values = Rating
 rating_matrix = train.pivot(index='UserID', columns='MovieID', values='Rating')
 
-# Precompute similarities and cache them
-similarity_cache = {}
 
 def main():
     print("Starting k-Fold Cross-Validation...")
-    mean_mse, std_mse = kfold_cross_validation(train, similarity_function, similarity_cache)
+    mean_mse, std_mse = kfold_cross_validation(train, similarity_function)
     print(f"Mean MSE: {mean_mse:.4f}, Std MSE: {std_mse:.4f}")
 
     # Predict ratings for task.csv
@@ -19,7 +17,7 @@ def main():
     for _, row in task.iterrows():
         target_user = row['UserID']
         target_movie = row['MovieID']
-        predicted_rating = predict_rating(target_user, target_movie, similarity_function, similarity_cache, rating_matrix)
+        predicted_rating = predict_rating(target_user, target_movie, similarity_function, rating_matrix)
         predicted_ratings.append(round(predicted_rating))
 
     # Replace NULL values in task.csv with predicted ratings

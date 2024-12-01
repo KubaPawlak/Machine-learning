@@ -1,7 +1,18 @@
+from typing import Any
+
 import numpy as np
+import logging
 
+_similarity_cache: dict[(Any, Any),int] = dict()
 
-def similarity_function(user1, user2, similarity_cache, min_common=3, pearson_weight=0.7):
+logger = logging.getLogger(__name__)
+
+def clear_cache():
+    global _similarity_cache
+    _similarity_cache = dict()
+    logger.debug("Similarity cache cleared")
+
+def similarity_function(user1, user2, min_common=3, pearson_weight=0.7):
     """
      Computes a similarity score between two users based on their movie ratings.
 
@@ -17,18 +28,19 @@ def similarity_function(user1, user2, similarity_cache, min_common=3, pearson_we
      Parameters:
          user1: Ratings given by the first user.
          user2: Ratings given by the second user.
-         similarity_cache: A cache to store previously computed similarity scores for efficiency.
          min_common: Minimum number of common ratings required to compute similarity.
          pearson_weight: Weighting factor for the Pearson similarity in the final score.
      """
-    if (user1.name, user2.name) in similarity_cache:
-        return similarity_cache[(user1.name, user2.name)]
+    if (user1.name, user2.name) in _similarity_cache:
+        cached_value = _similarity_cache[(user1.name, user2.name)]
+        logger.debug(f"Similarity for users {user1.name}, {user2.name} retrieved from cache: {cached_value}")
+        return cached_value
 
     common_movies = ~user1.isna() & ~user2.isna()
     common_count = common_movies.sum()
 
     if common_count < min_common:
-        similarity_cache[(user1.name, user2.name)] = 0
+        _similarity_cache[(user1.name, user2.name)] = 0
         return 0  # Insufficient overlap
 
     user1_common = user1[common_movies]
@@ -55,6 +67,6 @@ def similarity_function(user1, user2, similarity_cache, min_common=3, pearson_we
     # Apply damping factor
     combined_similarity_score *= common_count / (common_count + 1)
 
-    similarity_cache[(user1.name, user2.name)] = combined_similarity_score
-    print(f"Similarity for {user1.name} and {user2.name} calculated: {combined_similarity_score:.4f}")
+    _similarity_cache[(user1.name, user2.name)] = combined_similarity_score
+    logger.debug(f"Similarity for {user1.name} and {user2.name} calculated: {combined_similarity_score:.4f}")
     return combined_similarity_score

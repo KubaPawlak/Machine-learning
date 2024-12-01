@@ -19,13 +19,13 @@ def replace_ratings_with_nan(test_test):
     return test_test_with_nulls
 
 
-def predict_for_test_set(test_set, similarity_func, similarity_cache, rating_matrix_train):
+def predict_for_test_set(test_set, similarity_func, rating_matrix_train):
     predicted_ratings = []
 
     for _, row in test_set.iterrows():
         target_user = row['UserID']
         target_movie = row['MovieID']
-        predicted_rating = predict_rating(target_user, target_movie, similarity_func, similarity_cache,
+        predicted_rating = predict_rating(target_user, target_movie, similarity_func,
                                           rating_matrix_train)
         predicted_ratings.append(predicted_rating)
 
@@ -62,10 +62,8 @@ def main():
 
     rating_matrix_train = train_test.pivot(index='UserID', columns='MovieID', values='Rating')
 
-    similarity_cache = {}
-
     print("Predicting ratings for test_test...")
-    predicted_ratings = predict_for_test_set(test_test_with_nulls, similarity_function, similarity_cache, rating_matrix_train)
+    predicted_ratings = predict_for_test_set(test_test_with_nulls, similarity_function, rating_matrix_train)
 
     print("Calculating accuracy...")
     calculate_accuracy(real_ratings, test_test_with_nulls, predicted_ratings)
