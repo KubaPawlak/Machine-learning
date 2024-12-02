@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -7,6 +9,7 @@ from data.movie import train
 from task_3.prediction import predict_rating
 from task_3.similarity import similarity_function
 
+logger = logging.getLogger(__name__)
 
 def split_data(train_data):
     train_test, test_test = train_test_split(train_data, test_size=0.2, random_state=42)
@@ -40,19 +43,20 @@ def calculate_accuracy(real_ratings, test_test_with_nulls, predicted_ratings):
     mae = mean_absolute_error(comparison_df['Rating_x'], comparison_df['Rating_y'])
     rmse = np.sqrt(mean_squared_error(comparison_df['Rating_x'], comparison_df['Rating_y']))
 
-    print(f"Mean Absolute Error (MAE): {mae:.4f}")
-    print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+    logger.info(f"Mean Absolute Error (MAE): {mae:.4f}")
+    logger.info(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
     # Calculate accuracy as percentage of correct predictions
     correct_predictions = comparison_df[comparison_df['Rating_x'] == comparison_df['Rating_y']].shape[0]
     total_predictions = comparison_df.shape[0]
     accuracy_percentage = (correct_predictions / total_predictions) * 100
 
-    print(f"Accuracy: {accuracy_percentage:.2f}%")
+    logger.info(f"Accuracy: {accuracy_percentage:.2f}%")
 
 
 def main():
-    print("Starting the process...")
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Starting the process...")
 
     train_test, test_test = split_data(train)
 
@@ -62,10 +66,10 @@ def main():
 
     rating_matrix_train = train_test.pivot(index='UserID', columns='MovieID', values='Rating')
 
-    print("Predicting ratings for test_test...")
+    logger.info("Predicting ratings for test_test...")
     predicted_ratings = predict_for_test_set(test_test_with_nulls, similarity_function, rating_matrix_train)
 
-    print("Calculating accuracy...")
+    logger.info("Calculating accuracy...")
     calculate_accuracy(real_ratings, test_test_with_nulls, predicted_ratings)
 
 
