@@ -1,30 +1,37 @@
+import logging
+from pathlib import Path
+
 from data.movie import train, task
 from task_3.cross_validation import kfold_cross_validation
 from task_3.prediction import predict_rating
 from task_3.similarity import similarity_function
 
-# Pivot table: rows = UserID, columns = MovieID, values = Rating
-rating_matrix = train.pivot(index='UserID', columns='MovieID', values='Rating')
+logger = logging.getLogger(__name__)
 
+SUBMISSION_PATH = Path(__file__).parent / 'submission/submission.csv'
 
 def main():
-    print("Starting k-Fold Cross-Validation...")
-    mean_mse, std_mse = kfold_cross_validation(train, similarity_function)
-    print(f"Mean MSE: {mean_mse:.4f}, Std MSE: {std_mse:.4f}")
+    logging.basicConfig(level=logging.INFO)
 
-    # Predict ratings for task.csv
+    rating_matrix = train.pivot(index='UserID', columns='MovieID', values='Rating')
+
     predicted_ratings = []
     for _, row in task.iterrows():
         target_user = row['UserID']
         target_movie = row['MovieID']
         predicted_rating = predict_rating(target_user, target_movie, similarity_function, rating_matrix)
-        predicted_ratings.append(round(predicted_rating))
+        predicted_rating = int(round(predicted_rating))
+        assert 0 <= predicted_rating <= 5
+        predicted_ratings.append(predicted_rating)
 
-    # Replace NULL values in task.csv with predicted ratings
+    # Replace null values in task.csv with predicted ratings
     task['Rating'] = predicted_ratings
-    task.to_csv('submission.csv', index=False, sep=';')
+    assert task['Rating'].isna().sum() == 0
 
-    print("Predictions saved to submission.csv")
+    SUBMISSION_PATH.parent.mkdir(parents=True,exist_ok=True)
+    task.to_csv(SUBMISSION_PATH, index=False, sep=';')
+
+    logger.info(f"Predictions saved to {SUBMISSION_PATH}")
 
 if __name__ == "__main__":
     main()
