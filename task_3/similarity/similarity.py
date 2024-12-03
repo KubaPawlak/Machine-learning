@@ -1,7 +1,14 @@
+from typing import Dict
+
 import numpy as np
+import pandas as pd
 
 
-def similarity_function(user1, user2, similarity_cache, min_common=3, pearson_weight=0.7):
+def similarity_function(user1: pd.Series,
+                        user2: pd.Series,
+                        similarity_cache: Dict[tuple, float],
+                        min_common: int = 3,
+                        pearson_weight: float = 0.7) -> float:
     """
      Computes a similarity score between two users based on their movie ratings.
 

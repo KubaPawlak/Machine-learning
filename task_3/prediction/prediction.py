@@ -1,12 +1,21 @@
-def predict_rating(target_user, target_movie, similarity_func, similarity_cache, rating_matrix):
+from typing import Callable, Dict
+
+import pandas as pd
+
+
+def predict_rating(target_user: int, target_movie: int, similarity_func: Callable,
+                   similarity_cache: Dict[tuple, float], rating_matrix: pd.DataFrame) -> float:
+
     movie_ratings = rating_matrix[target_movie]
     rated_by_others = movie_ratings.dropna()
 
-    similarities = []
-    ratings = []
+    similarities: list[float] = []
+    ratings: list[float] = []
 
     for other_user in rated_by_others.index:
-        similarity = similarity_func(rating_matrix.loc[target_user], rating_matrix.loc[other_user], similarity_cache)
+        similarity = similarity_func(rating_matrix.loc[target_user],
+                                     rating_matrix.loc[other_user],
+                                     similarity_cache)
         if similarity > 0:  # Consider only positive similarities
             similarities.append(similarity)
             ratings.append(movie_ratings[other_user])

@@ -1,13 +1,19 @@
 import logging
+from typing import Callable, Tuple, Any
 
 import numpy as np
+import pandas as pd
+from numpy import floating
 from sklearn.model_selection import KFold
 
 from data.movie import train
 from task_3.prediction import predict_rating
 from task_3.similarity import similarity_function
 
-def k_fold_cross_validation(data, similarity_func, k=5):
+def k_fold_cross_validation(data: pd.DataFrame,
+                            similarity_func: Callable,
+                            k: int = 5) -> tuple[floating[Any], floating[Any]]:
+
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
     mse_scores = []
 
