@@ -15,7 +15,7 @@ def k_fold_cross_validation(data: pd.DataFrame,
                             k: int = 5) -> tuple[floating[Any], floating[Any]]:
 
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
-    mse_scores = []
+    accuracies = []
 
     for train_indices, val_indices in kf.split(data):
         train_data = data.iloc[train_indices]
@@ -36,15 +36,22 @@ def k_fold_cross_validation(data: pd.DataFrame,
             predictions.append(predicted_rating)
             true_ratings.append(true_rating)
 
-        mse = np.mean((np.array(predictions) - np.array(true_ratings)) ** 2)
-        mse_scores.append(mse)
+        # Calculate accuracy: predictions are correct if they are within 0.5 of the true rating
+        correct_predictions = sum(
+            1 for pred, true in zip(predictions, true_ratings) if abs(pred - true) <= 0.5
+        )
+        accuracy = (correct_predictions / len(true_ratings)) * 100  # Convert to percentage
+        accuracies.append(accuracy)
 
-    return np.mean(mse_scores), np.std(mse_scores)
+    return np.mean(accuracies), np.std(accuracies)
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-    mse_mean, mse_stddev = k_fold_cross_validation(train, similarity_function, k=5)
-    print(f"MSE = {mse_mean:.2f} (\u03c3={mse_stddev:.2f})")
 
-if __name__ == '__main__':
-    _main()
+def main():
+    print("Starting k-fold cross-validation...")
+
+    # Perform k-fold cross-validation
+    mean_accuracy, std_accuracy = k_fold_cross_validation(train, similarity_function, k=5)
+    print(f"Mean Accuracy from k-fold: {mean_accuracy:.2f}%, Standard Deviation: {std_accuracy:.2f}%")
+
+if __name__ == "__main__":
+    main()
