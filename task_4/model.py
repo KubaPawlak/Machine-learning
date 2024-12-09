@@ -44,19 +44,19 @@ class Model:
         return total_loss
 
     def _compute_gradients(self, regularization_parameter:float=0.0) -> tuple[_PGradients, _XGradients]:
-        dp = np.zeros_like(self.p)
-        dx = np.zeros_like(self.x)
+        grad_p = np.zeros_like(self.p)
+        grad_x = np.zeros_like(self.x)
 
         for m, u in self._existing_ratings():
             error = self._error(u, m)
-            dp[u, 0] += error  # bias term p_0
-            dp[u, 1:] += error * self.x[m, :]  # user parameters p_i for i = 1,2,...N
-            dx[m, :] += error * self.p[u, 1:]  # movie features x_i for i = 1,2,...N
+            grad_p[u, 0] += error  # bias term p_0
+            grad_p[u, 1:] += error * self.x[m, :]  # user parameters p_i for i = 1,2,...N
+            grad_x[m, :] += error * self.p[u, 1:]  # movie features x_i for i = 1,2,...N
 
-        dp[:,1:] += regularization_parameter * self.p[:,1:]
-        dx += regularization_parameter * self.x
+        grad_p[:,1:] += regularization_parameter * self.p[:,1:]
+        grad_x += regularization_parameter * self.x
 
-        return _PGradients(dp), _XGradients(dx)
+        return _PGradients(grad_p), _XGradients(grad_x)
 
     def train(self, learning_rate=0.01, n_iterations=1000, **kwargs):
         for i in range(n_iterations):
