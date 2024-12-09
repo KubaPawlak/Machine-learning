@@ -23,7 +23,7 @@ y_{M,1} & y_{M,2} & \cdots & y_{M,U}
 $$
 
 Valid ratings are integers from 0 to 5.
-Value $y_{m,u} = -1$ will denote that user $u$ did not rate movie $m$.
+If $y_{m,u}$ takes value of NaN, it will denote that user $u$ did not rate movie $m$.
 
 ### Movie features
 Let $N$ be the total number of features.
@@ -73,6 +73,11 @@ x[m,:] = \begin{bmatrix}
 x_{1,1} & x_{1,2} & \cdots & x_{1,N}
 \end{bmatrix}.
 $$
+In code:
+```python
+def prediction(m, u):
+    return p[u, 0] + np.dot(p[u, 1:], x[m, :])
+```
 
 ## Calculating errors
 
