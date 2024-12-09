@@ -17,7 +17,7 @@ class Model:
     def __init__(self, train: pd.DataFrame, n_features: int = 5):
         # Create the pivot table for ratings
         ratings = train.pivot(index='MovieID', columns='UserID', values='Rating')
-        self.y = ratings.fillna(-1).to_numpy()
+        self.y = ratings.fillna(np.nan).to_numpy()
 
         # Create mappings directly from ratings.index and ratings.columns
         self.map_user = {UserId(user_id): _UserIndex(idx) for idx, user_id in enumerate(ratings.columns)}
@@ -29,7 +29,7 @@ class Model:
         self.p = np.random.rand(self.y.shape[1], n_features + 1)  # User parameters
 
     def _existing_ratings(self) -> Iterable[tuple[_MovieIndex, _UserIndex]]:
-        return np.argwhere(self.y != -1)
+        return np.argwhere(np.logical_not(np.isnan(self.y)))
 
     def _error(self, user: _UserIndex, movie: _MovieIndex) -> float:
         prediction = self._calculate_prediction(user, movie)
@@ -44,18 +44,18 @@ class Model:
         return total_loss
 
     def _compute_gradients(self, regularization_parameter:float=0.0) -> tuple[_PGradients, _XGradients]:
-        grad_p = np.zeros_like(self.p)
-        grad_x = np.zeros_like(self.x)
+        y_predictions = self._prediction_matrix()
+        errors: np.ndarray = y_predictions - self.y
+        errors[np.isnan(errors)] = 0
 
-        for m, u in self._existing_ratings():
-            error = self._error(u, m)
-            grad_p[u, 0] += error  # bias term p_0
-            grad_p[u, 1:] += error * self.x[m, :]  # user parameters p_i for i = 1,2,...N
-            grad_x[m, :] += error * self.p[u, 1:]  # movie features x_i for i = 1,2,...N
+        grad_p0 = np.sum(errors, axis=0)  # sum errors along the movies
+        grad_p = np.dot(errors.T, self.x)  # (U,M) * (M,N)
+        grad_p: np.ndarray = np.c_[grad_p0, grad_p]
 
-        grad_p[:,1:] += regularization_parameter * self.p[:,1:]
-        grad_x += regularization_parameter * self.x
+        grad_x = np.dot(errors, self.p[:,1:])
 
+        assert grad_p.shape == self.p.shape
+        assert grad_x.shape == self.x.shape
         return _PGradients(grad_p), _XGradients(grad_x)
 
     def train(self, learning_rate=0.01, n_iterations=1000, **kwargs):
@@ -73,8 +73,14 @@ class Model:
         value = self.y[movie, user].item()
         if 0 <= value <= 5:
             return int(value)
-        assert value == -1
+        assert np.isnan(value)
         return None
+
+    def _prediction_matrix(self) -> np.ndarray:
+        x_augmented = np.c_[np.ones(self.x.shape[0]), self.x]
+        result: np.ndarray = x_augmented @ self.p.T
+        assert result.shape == self.y.shape
+        return result
 
     def _calculate_prediction(self, user: _UserIndex, movie: _MovieIndex) -> float:
         """Calculate the predicted rating for a user and movie."""
