@@ -1,5 +1,4 @@
-import math
-from typing import NewType
+from typing import NewType, Iterable
 
 import numpy as np
 import pandas as pd
@@ -8,6 +7,9 @@ UserId = NewType('UserId', int)
 _UserIndex = NewType('UserIndex', int)
 MovieId = NewType('MovieId', int)
 _MovieIndex = NewType('MovieIndex', int)
+
+_PGradients = NewType('PGradients', np.ndarray)
+_XGradients = NewType('XGradients', np.ndarray)
 
 
 class Model:
@@ -25,6 +27,33 @@ class Model:
         self.n_features = n_features
         self.x = np.random.rand(self.y.shape[0], n_features)  # Movie features
         self.p = np.random.rand(self.y.shape[1], n_features + 1)  # User parameters
+
+    def _existing_ratings(self) -> Iterable[tuple[_MovieIndex, _UserIndex]]:
+        return np.argwhere(self.y == -1)
+
+    def _error(self, user: _UserIndex, movie: _MovieIndex) -> float:
+        prediction = self._calculate_prediction(user, movie)
+        actual = self._get_actual_rating(user, movie)
+        assert actual is not None
+        return actual - prediction
+
+    def _loss(self) -> float:
+        total_loss = 0.0
+        for movie, user in self._existing_ratings():
+            total_loss += 0.5 * self._error(user, movie) ** 2
+        return total_loss
+
+    def _compute_gradients(self) -> tuple[_PGradients, _XGradients]:
+        dp = np.zeros_like(self.p)
+        dx = np.zeros_like(self.x)
+
+        for m, u in self._existing_ratings():
+            error = self._error(u, m)
+            dp[u, 0] += error  # bias term p_0
+            dp[u, 1:] += error * self.x[m, :]  # user parameters p_i for i = 1,2,...N
+            dx[m, :] += error * self.p[u, 1:]  # movie features x_i for i = 1,2,...N
+
+        return _PGradients(dp), _XGradients(dx)
 
     def _get_actual_rating(self, user: _UserIndex, movie: _MovieIndex) -> int | None:
         """Retrieve the actual rating if it exists, otherwise return None."""
