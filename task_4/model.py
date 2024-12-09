@@ -29,13 +29,13 @@ class Model:
         self.p = np.random.rand(self.y.shape[1], n_features + 1)  # User parameters
 
     def _existing_ratings(self) -> Iterable[tuple[_MovieIndex, _UserIndex]]:
-        return np.argwhere(self.y == -1)
+        return np.argwhere(self.y != -1)
 
     def _error(self, user: _UserIndex, movie: _MovieIndex) -> float:
         prediction = self._calculate_prediction(user, movie)
         actual = self._get_actual_rating(user, movie)
         assert actual is not None
-        return actual - prediction
+        return prediction - actual
 
     def _loss(self) -> float:
         total_loss = 0.0
@@ -43,7 +43,7 @@ class Model:
             total_loss += 0.5 * self._error(user, movie) ** 2
         return total_loss
 
-    def _compute_gradients(self) -> tuple[_PGradients, _XGradients]:
+    def _compute_gradients(self, regularization_parameter:float=0.0) -> tuple[_PGradients, _XGradients]:
         dp = np.zeros_like(self.p)
         dx = np.zeros_like(self.x)
 
@@ -53,7 +53,20 @@ class Model:
             dp[u, 1:] += error * self.x[m, :]  # user parameters p_i for i = 1,2,...N
             dx[m, :] += error * self.p[u, 1:]  # movie features x_i for i = 1,2,...N
 
+        dp[:,1:] += regularization_parameter * self.p[:,1:]
+        dx += regularization_parameter * self.x
+
         return _PGradients(dp), _XGradients(dx)
+
+    def train(self, learning_rate=0.01, n_iterations=1000, **kwargs):
+        for i in range(n_iterations):
+
+            dp, dx = self._compute_gradients(**kwargs)
+            self.p -= learning_rate * dp
+            self.x -= learning_rate * dx
+
+            if i % 10 == 0:
+                print(f'Iteration: {i:4}, Loss: {self._loss():.2f}')
 
     def _get_actual_rating(self, user: _UserIndex, movie: _MovieIndex) -> int | None:
         """Retrieve the actual rating if it exists, otherwise return None."""
