@@ -35,6 +35,7 @@ class Validator:
         self.logger.info(f"One off: {fraction_one_off * 100:.2f}%")
 
     def train_set_accuracy(self) -> AccuracyScores:
+        self.logger.info("Calculating accuracy on training set")
         test: pd.DataFrame = self.model.train_set.copy()
         test['Rating'] = np.nan
         result = self.model.generate_submission(test)
@@ -48,16 +49,17 @@ class Validator:
             test['Rating'] = np.nan
             return self.model.generate_submission(test)
 
-
     def validation_set_accuracy(self, validation_set_fraction: float = 0.2) -> AccuracyScores:
         assert 0 < validation_set_fraction < 1
+        self.logger.info(f"Calculating accuracy on validation set ({int(validation_set_fraction * 100)}% of train set)")
         train, val = train_test_split(self.model.train_set, test_size=validation_set_fraction)
         result = self._train_and_predict(train, val)
         scores = self._calculate_scores(val['Rating'], result['Rating'])
         self._report_scores(*scores)
         return scores
 
-    def k_fold_cross_validation(self, k=5) -> AccuracyScores:
+    def k_fold_cross_validation(self, k: int = 5) -> AccuracyScores:
+        self.logger.info(f"Running k-fold cross-validation (k={k})")
         k_fold = KFold(n_splits=k, shuffle=True)
         whole_set = self.model.train_set
         scores: list[AccuracyScores] = []

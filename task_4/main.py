@@ -22,11 +22,25 @@ class CollaborativeFilteringModel(submission.Model[Model]):
         return results
 
 
+def report_scores(train_scores, val_scores, cross_scores):
+    print("===   Training set accuracies   ===")
+    print(f"Correct: {train_scores[0]:.2f}")
+    print(f"One off: {train_scores[1]:.2f}")
+    print("===  Validaiton set accuracies  ===")
+    print(f"Correct: {val_scores[0]:.2f}")
+    print(f"One off: {val_scores[1]:.2f}")
+    print("=== Cross-validation accuracies ===")
+    print(f"Correct: {cross_scores[0]:.2f}")
+    print(f"One off: {cross_scores[1]:.2f}")
+
 def _main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     model = CollaborativeFilteringModel(train)
     validator = validation.Validator(model)
-    validator.k_fold_cross_validation()
+    train_set_scores = validator.train_set_accuracy()
+    validation_scores = validator.validation_set_accuracy()
+    cross_validation_scores = validator.k_fold_cross_validation()
+    report_scores(train_set_scores, validation_scores, cross_validation_scores)
 
 if __name__ == '__main__':
     _main()
