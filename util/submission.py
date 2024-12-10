@@ -16,7 +16,7 @@ class Model[TModel](ABC):
         return self.train_set
 
     @abstractmethod
-    def train(self, training_data: pd.DataFrame) -> TModel:
+    def create_model(self, training_data: pd.DataFrame) -> TModel:
         pass
 
     @abstractmethod
@@ -42,7 +42,7 @@ class Model[TModel](ABC):
             self.logger.info(f"Running user {user_id:<4} ({j + 1}/{num_users})")
             user_train = self.select_training_data(user_id)
             self.logger.debug(f"Training model for user {user_id} from {len(user_train)} movies")
-            model = self.train(user_train)
+            model = self.create_model(user_train)
 
             movies_to_predict = task[task['UserID'] == user_id]['MovieID'].values.tolist()
             self.logger.debug(f"Generating prediction for user {user_id}, for {len(movies_to_predict)} movies")
@@ -61,9 +61,25 @@ class Model[TModel](ABC):
 
         train = self.select_training_data()
         self.logger.debug(f"Training model from {len(train)} data points")
-        model = self.train(train)
+        model = self.create_model(train)
         self.logger.debug(f"Generating predictions")
         predictions = self.predict(model, user_ids, movie_ids)
         task['Rating'] = predictions
         self.logger.info(f"Generated {len(predictions)} predictions")
         return task
+
+    def with_custom_train_set(self, new_train_set: pd.DataFrame) -> '_CustomTrainSetGuard':
+        return _CustomTrainSetGuard(self, new_train_set)
+
+
+class _CustomTrainSetGuard:
+    def __init__(self, model: Model, train_set: pd.DataFrame):
+        self.model = model
+        self.original_train_set = model.train_set
+        self.custom_train_set = train_set
+
+    def __enter__(self):
+        self.model.train_set = self.custom_train_set
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+        self.model.train_set = self.original_train_set
