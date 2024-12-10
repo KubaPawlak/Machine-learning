@@ -1,3 +1,5 @@
+import logging
+import sys
 from typing import NewType, Iterable
 
 import numpy as np
@@ -11,10 +13,10 @@ _MovieIndex = NewType('MovieIndex', int)
 _PGradients = NewType('PGradients', np.ndarray)
 _XGradients = NewType('XGradients', np.ndarray)
 
-
 class Model:
 
     def __init__(self, train: pd.DataFrame, n_features: int = 5):
+        self.logger = logging.getLogger(self.__class__.__name__)
         # Create the pivot table for ratings
         ratings = train.pivot(index='MovieID', columns='UserID', values='Rating')
         self.y = ratings.fillna(np.nan).to_numpy()
@@ -49,24 +51,37 @@ class Model:
         errors[np.isnan(errors)] = 0
 
         grad_p0 = np.sum(errors, axis=0)  # sum errors along the movies
-        grad_p = np.dot(errors.T, self.x)  # (U,M) * (M,N)
+        grad_p = errors.T @ self.x  # (U,M) * (M,N)
         grad_p: np.ndarray = np.c_[grad_p0, grad_p]
 
-        grad_x = np.dot(errors, self.p[:,1:])
+        grad_x = errors @ self.p[:,1:]
 
         assert grad_p.shape == self.p.shape
         assert grad_x.shape == self.x.shape
+
+        grad_p[:,1:] += regularization_parameter * self.p[:,1:]
+        grad_x += regularization_parameter * self.x
+
         return _PGradients(grad_p), _XGradients(grad_x)
 
-    def train(self, learning_rate=0.01, n_iterations=1000, **kwargs):
-        for i in range(n_iterations):
+    def train(self, learning_rate=0.01, epochs=1000, **kwargs):
+        old_settings = np.seterr(over='raise')
+        i = 0
+        try:
+            for i in range(epochs):
 
-            dp, dx = self._compute_gradients(**kwargs)
-            self.p -= learning_rate * dp
-            self.x -= learning_rate * dx
+                dp, dx = self._compute_gradients(**kwargs)
+                self.p -= learning_rate * dp
+                self.x -= learning_rate * dx
 
-            if i % 10 == 0:
-                print(f'Iteration: {i:4}, Loss: {self._loss():.2f}')
+                if i % 10 == 0 or i < 10:
+                    self.logger.debug(f'Iteration: {i:4}, Loss: {self._loss():.2f}')
+        except FloatingPointError as err:
+            self.logger.error(f"Encountered error in iteration {i}: {err}")
+            raise
+        finally:
+            np.seterr(**old_settings)
+
 
     def _get_actual_rating(self, user: _UserIndex, movie: _MovieIndex) -> int | None:
         """Retrieve the actual rating if it exists, otherwise return None."""
