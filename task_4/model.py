@@ -4,6 +4,7 @@ from typing import NewType, Iterable
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 UserId = NewType('UserId', int)
 _UserIndex = NewType('UserIndex', int)
@@ -68,7 +69,7 @@ class Model:
         old_settings = np.seterr(over='raise')
         i = 0
         try:
-            for i in range(epochs):
+            for i in tqdm(range(epochs), desc="Training model"):
 
                 dp, dx = self._compute_gradients(**kwargs)
                 self.p -= learning_rate * dp
@@ -116,8 +117,8 @@ class Model:
         user_idx = self.map_user[user_id]
         movie_idx = self.map_movie[movie_id]
 
-        if (existing_rating := self._get_actual_rating(user_idx, movie_idx)) is not None:
-            return existing_rating
+        # if (existing_rating := self._get_actual_rating(user_idx, movie_idx)) is not None:
+        #     return existing_rating
 
         prediction = self._calculate_prediction(user_idx, movie_idx)
         prediction = np.clip(prediction, 0, 5)
