@@ -68,6 +68,7 @@ class Model:
     def train(self, learning_rate=0.01, epochs=1000, **kwargs):
         old_settings = np.seterr(over='raise')
         i = 0
+        previous_loss = np.inf
         try:
             for i in tqdm(range(epochs), desc="Training model"):
 
@@ -76,7 +77,11 @@ class Model:
                 self.x -= learning_rate * dx
 
                 if i % 10 == 0 or i < 10:
-                    self.logger.debug(f'Iteration: {i:4}, Loss: {self._loss():.2f}')
+                    loss = self._loss()
+                    if loss > previous_loss:
+                        self.logger.warning(f"Loss in iteration {i} increased by {loss - previous_loss}.")
+                    previous_loss = loss
+                    self.logger.debug(f'Iteration: {i:4}, Loss: {loss:.2f}')
         except FloatingPointError as err:
             self.logger.error(f"Encountered error in iteration {i}: {err}")
             raise
