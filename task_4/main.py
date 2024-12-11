@@ -13,9 +13,8 @@ from util import submission, validation
 class CollaborativeFilteringModel(submission.Model[Model]):
 
     def create_model(self, training_data: pd.DataFrame) -> Model:
-        model = Model(training_data, n_features=50)
-        model.train(learning_rate=1e-3, regularization_parameter=1e-2, epochs=5_000)  # main training
-        model.train(learning_rate=1e-4, regularization_parameter=1e-2, epochs=1_000)  # fine-tuning
+        model = Model(training_data, n_features=15)
+        model.train(learning_rate=1e-3, regularization_parameter=1e-2, epochs=5_000)
         return model
 
     def predict(self, model: Model, user_ids: list[int], movie_ids: list[int]) -> list[int]:
@@ -53,8 +52,8 @@ def _main():
     validator = validation.Validator(model)
     report_scores(
         train_scores=validator.train_set_accuracy(),
-        # val_scores=validator.validation_set_accuracy(),
-        cross_scores=validator.k_fold_cross_validation(k=3),
+        val_scores=validator.validation_set_accuracy(),
+        cross_scores=validator.k_fold_cross_validation(k=5),
     )
     time.sleep(0.5)
     s = model.generate_submission(data.movie.task)
