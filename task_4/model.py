@@ -1,5 +1,4 @@
 import logging
-import sys
 from typing import NewType, Iterable
 
 import numpy as np
@@ -13,6 +12,7 @@ _MovieIndex = NewType('MovieIndex', int)
 
 _PGradients = NewType('PGradients', np.ndarray)
 _XGradients = NewType('XGradients', np.ndarray)
+
 
 class Model:
 
@@ -46,7 +46,7 @@ class Model:
             total_loss += 0.5 * self._error(user, movie) ** 2
         return total_loss
 
-    def _compute_gradients(self, regularization_parameter:float=0.0) -> tuple[_PGradients, _XGradients]:
+    def _compute_gradients(self, regularization_parameter: float = 0.0) -> tuple[_PGradients, _XGradients]:
         y_predictions = self._prediction_matrix()
         errors: np.ndarray = y_predictions - self.y
         errors[np.isnan(errors)] = 0
@@ -55,12 +55,12 @@ class Model:
         grad_p = errors.T @ self.x  # (U,M) * (M,N)
         grad_p: np.ndarray = np.c_[grad_p0, grad_p]
 
-        grad_x = errors @ self.p[:,1:]
+        grad_x = errors @ self.p[:, 1:]
 
         assert grad_p.shape == self.p.shape
         assert grad_x.shape == self.x.shape
 
-        grad_p[:,1:] += regularization_parameter * self.p[:,1:]
+        grad_p[:, 1:] += regularization_parameter * self.p[:, 1:]
         grad_x += regularization_parameter * self.x
 
         return _PGradients(grad_p), _XGradients(grad_x)
@@ -70,7 +70,17 @@ class Model:
         i = 0
         previous_loss = np.inf
         try:
-            for i in tqdm(range(epochs), desc="Training model"):
+            # use progress bar only if debug logger is disabled, because they do not work well together
+            use_progress_bar = not self.logger.isEnabledFor(logging.DEBUG)
+            progress = tqdm(range(epochs), desc="Training model") if use_progress_bar else range(epochs)
+
+            def report_loss(iter_, loss_: float):
+                if use_progress_bar:
+                    progress.set_postfix(loss=f"{loss:.2f}")
+                else:
+                    self.logger.debug(f'Iteration: {iter_:4}, Loss: {loss_:.2f}')
+
+            for i in progress:
 
                 dp, dx = self._compute_gradients(**kwargs)
                 self.p -= learning_rate * dp
@@ -81,13 +91,13 @@ class Model:
                     if loss > previous_loss:
                         self.logger.warning(f"Loss in iteration {i} increased by {loss - previous_loss}.")
                     previous_loss = loss
-                    self.logger.debug(f'Iteration: {i:4}, Loss: {loss:.2f}')
+                    report_loss(i, loss)
+
         except FloatingPointError as err:
             self.logger.error(f"Encountered error in iteration {i}: {err}")
             raise
         finally:
             np.seterr(**old_settings)
-
 
     def _get_actual_rating(self, user: _UserIndex, movie: _MovieIndex) -> int | None:
         """Retrieve the actual rating if it exists, otherwise return None."""
