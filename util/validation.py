@@ -39,7 +39,7 @@ class Validator:
         test: pd.DataFrame = self.model.train_set.copy()
         test['Rating'] = np.nan
         result = self.model.generate_submission(test)
-        scores = self._calculate_scores(result['Rating'], result['Rating'])
+        scores = self._calculate_scores(self.model.train_set['Rating'], result['Rating'])
         self._report_scores(*scores)
         return scores
 

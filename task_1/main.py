@@ -1,71 +1,31 @@
 import logging
+import time
 from collections.abc import Callable
 from pathlib import Path
 
-from task_1.classification import KNeighborsClassifier
+import tqdm
+from numpy import ndarray
+
+import util.validation
+from data.movie import train
 from movie import Movie
 from movie.tmdb.client import Client
+from task_1.classification import KNeighborsClassifier
 from task_1.similarity import calculate_movie_similarity, fit_scaler
+from util import submission
 
 _RESULT_FILE = Path('task_1_result.csv').absolute()
 import pandas as pd
 
-_tmdb_client = Client()
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def generate_predictions(train: pd.DataFrame,
-                         task: pd.DataFrame,
-                         n_neighbors: int = 5,
-                         similarity_fn: Callable[[Movie, Movie], float] = calculate_movie_similarity
-                         ) -> pd.DataFrame:
-    logger.debug("Fetching movie data")
-    all_movies = [_tmdb_client.get_movie(movie_id) for movie_id in train['MovieID'].unique()]
-    logger.debug("Fitting scaler")
-    fit_scaler(all_movies)
-
-    def distance_function(movie_1: Movie, movie_2: Movie) -> float:
-        # invert the result to convert from similarity (decreasing) to distance (increasing)
-        return 1 / similarity_fn(movie_1, movie_2)
-
-    classifier = KNeighborsClassifier(n_neighbors, distance_function)
-
-    def predict_rating(row: pd.Series) -> int:
-        user_id, movie_id = row['UserID'], row['MovieID']
-        logger.debug("Predicting rating for movie %i by user %i", movie_id, user_id)
-
-        movie_to_predict = _tmdb_client.get_movie(movie_id)
-
-        watched_movies_ratings: pd.DataFrame = train[train['UserID'] == user_id]
-
-        # get list of movies watched by the user
-        watched_movies: list[Movie] = [movie for movie in all_movies if
-                                       movie.movie_id in watched_movies_ratings['MovieID'].values]
-
-        logger.debug("Generating prediction")
-        predicted_rating = classifier.fit_predict(watched_movies, watched_movies_ratings['Rating'].to_numpy(),
-                                                  movie_to_predict)
-        logger.debug("Predicted rating of movie %i by user %i: %i", movie_id, user_id, predicted_rating)
-        return predicted_rating
-
-    # end predict_rating
-
-    logger.info("Calculating predictions...")
-    # apply the prediction function to each row in the task dataframe
-    predicted = task.apply(predict_rating, axis=1).astype(int)
-
-    task_with_predictions = task.copy()
-    task_with_predictions['Rating'] = predicted
-    return task_with_predictions
-
-
-def _main() -> None:
-    logging.basicConfig(level=logging.DEBUG)
-
-    def similarity_fn(movie_1: Movie, movie_2: Movie) -> float:
-        return calculate_movie_similarity(movie_1, movie_2,
+def create_classifier() -> KNeighborsClassifier:
+    def distance(movie_1: Movie, movie_2: Movie) -> float:
+        similarity = calculate_movie_similarity(movie_1, movie_2,
                                           metric='euclidean',
                                           scalar_similarity_part=0.6,
                                           genres_similarity_part=0.1,
@@ -73,12 +33,50 @@ def _main() -> None:
                                           directors_similarity_part=0.1,
                                           ratings_similarity_part=0.1
                                           )
+        return 1 / similarity
 
-    from data.movie import task, train
-    task_with_predictions = generate_predictions(train, task)
+    return KNeighborsClassifier(n_neighbors=5, distance_function=distance)
 
-    task_with_predictions.to_csv(_RESULT_FILE, index=False, sep=';')
-    logger.info("Written results file to %s", _RESULT_FILE)
+
+class KNNModel(submission.Model[tuple[list[Movie], ndarray]]):
+    def __init__(self, training_data: pd.DataFrame):
+        super().__init__(training_data, per_user=True)
+        tmdb_client = Client()
+        self.all_movies: dict[int, Movie] = {movie_id: tmdb_client.get_movie(movie_id)
+                                             for movie_id in training_data['MovieID'].unique()}
+        fit_scaler(self.all_movies.values())
+
+    def create_model(self, training_data: pd.DataFrame) -> tuple[list[Movie], ndarray]:
+        assert training_data['UserID'].nunique() == 1
+        user_id = training_data['UserID'].unique()[0]
+
+        watched_movies_ratings = training_data[training_data['UserID'] == user_id]['Rating'].values
+        watched_movies: list[Movie] = [self.all_movies[id_] for id_ in training_data['MovieID'].values]
+
+        return watched_movies, watched_movies_ratings
+
+    def predict(self, model: tuple[list[Movie], ndarray], user_ids: list[int], movie_ids: list[int]) -> list[int]:
+        movies, ratings = model
+        assert pd.Series(user_ids).nunique() == 1
+
+        classifier = create_classifier()
+
+        results = []
+        for movie_id in movie_ids:
+            movie_to_predict = self.all_movies[movie_id]
+            result = classifier.fit_predict(movies, ratings, movie_to_predict)
+            results.append(result)
+        return results
+
+
+
+def _main() -> None:
+    logging.basicConfig(level=logging.INFO)
+
+    model = KNNModel(train)
+    validator = util.validation.Validator(model)
+    validator.train_set_accuracy()
+
 
 
 if __name__ == '__main__':
