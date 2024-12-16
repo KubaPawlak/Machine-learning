@@ -368,6 +368,7 @@ Each method was evaluated on training, validation, and testing datasets.
 The results are presented in Table ~\ref{tab:comparison_accuracy} and Table
 ~\ref{tab:comparison_oneoff}.
 
+
 \begin{table}[h]
     \centering
     \begin{tabular}{|l|c|c|c|}
@@ -388,11 +389,11 @@ The results are presented in Table ~\ref{tab:comparison_accuracy} and Table
     \begin{tabular}{|l|c|c|c|}
         \hline
         \textbf{Method} & \textbf{Training One-Off} & \textbf{Validation One-Off} & \textbf{Testing One-Off} \\ \hline
-        KNN & 0.21 & 0.31 & 0.67 \\ \hline
-        Decision Tree & 0.16 & 0.29 & 0.70 \\ \hline
-        Random Forest & 0.37 & 0.40 & 0.76 \\ \hline
-        Person Similarity & 0.49 & 0.46 & 0.71 \\ \hline
-        Collaborative Filtering & 0.39 & 0.38 & 0.78 \\ \hline
+        KNN & 0.21 & 0.31 & 0.30 \\ \hline
+        Decision Tree & 0.16 & 0.29 & 0.31 \\ \hline
+        Random Forest & 0.37 & 0.40 & 0.39 \\ \hline
+        Person Similarity & 0.49 & 0.46 & 0.44 \\ \hline
+        Collaborative Filtering & 0.39 & 0.38 & 0.37 \\ \hline
     \end{tabular}
     \caption{Comparison of One-Off Predictions for Training, Validation, and Testing}
     \label{tab:comparison_oneoff}
@@ -402,7 +403,6 @@ The results are presented in Table ~\ref{tab:comparison_accuracy} and Table
 The KNN model demonstrated moderate performance by utilizing features of the movies and other user ratings on selected movies.
 However, its performance on testing data was lower than on training and validation sets.
 This discrepancy suggests potential overfitting and issues with dataset representativeness, as users often rate only movies they enjoy, leading to biases in the data.
-The relatively high one-off prediction rate highlights the model’s ability to approximate user preferences even when exact predictions are less accurate.
 Despite its simplicity, KNN’s reliance on dense data limits its scalability and effectiveness in sparse datasets.
 
 \paragraph{Decision Tree Approach:}
@@ -413,7 +413,7 @@ While Decision Trees provided valuable insights into user behavior through their
 
 \paragraph{Random Forest Approach:}
 As expected, Random Forests addressed the overfitting limitations of single Decision Trees, offering a more balanced performance across training, validation, and testing data.
-While the exact prediction rate was slightly lower than Decision Trees, the model's robustness was evident in its ability to generalize and achieve the highest one-off prediction rate.
+While the exact prediction rate was slightly lower than Decision Trees, the model's robustness was evident in its ability to generalize and achieve the second highest one-off prediction rate.
 This improved performance can be attributed to the ensemble's ability to reduce noise and overfitting, making it a reliable option for capturing broader user preferences.
 However, challenges in hyperparameter tuning may have constrained its full potential.
 These results suggest Random Forests may be more effective in scenarios requiring interpretability and resilience to noisy data.
@@ -421,7 +421,7 @@ These results suggest Random Forests may be more effective in scenarios requirin
 \paragraph{Person Similarity Approach:}
 The Person Similarity method was effective in dense data scenarios where users shared a significant number of common ratings.
 However, its reliance on overlapping ratings made it vulnerable to sparse datasets, resulting in lower overall accuracy.
-Despite these challenges, its relatively high one-off prediction rate underscores its usefulness in collaborative filtering scenarios, especially for datasets with strong user-item interactions.
+Despite these challenges, this method achieved the highest one-off prediction rate, which underscores its usefulness in collaborative filtering scenarios, especially for datasets with strong user-item interactions.
 
 \paragraph{Collaborative Filtering Approach:}
 Collaborative Filtering emerged as the most effective method, achieving the highest testing accuracy and strong one-off prediction rates.
@@ -437,5 +437,6 @@ Collaborative Filtering stood out as the most effective technique, indicating it
 
 The consistently high one-off prediction rates across methods suggest that, while exact matches are challenging, the models can approximate user preferences effectively.
 These results highlight the importance of addressing dataset biases to ensure reliable generalization in predictive modeling.
+
 
 \end{document}
