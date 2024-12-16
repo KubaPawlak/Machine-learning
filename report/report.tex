@@ -294,124 +294,51 @@ Nonetheless, it remains a valuable technique for collaborative filtering in reco
 
 \clearpage
 \section{Collaborative Filtering Approach}
-Collaborative filtering is a method used for making automatic predictions about the interests of a user by collecting preferences or taste information from many users. This approach assumes that if a user has agreed with another user on one issue, they are likely to agree on other issues as well.
+
 
 \subsection{Overview}
-This model was trained using a matrix factorization technique, where the user-item interaction matrix (ratings) was decomposed into two lower-dimensional matrices: one representing user parameters and the other representing movie features. This approach allows the model to learn latent factors that explain user preferences and movie characteristics.
 
-\paragraph{Dimensionality Selection}
-In our implementation, we initialized the feature space with a dimensionality of 15. This choice was based on empirical testing, balancing model complexity and performance. A higher dimensionality can capture more nuanced patterns but may lead to overfitting. Therefore, we monitored performance metrics on the training set and adjusted dimensionality as necessary to optimize generalization.
+This machine learning model utilizes \textbf{collaborative filtering} with matrix factorization to predict user ratings for movies. The goal is to uncover features for both users and movies, which are learned through optimization. By modeling user preferences and movie characteristics in a shared feature space, the system can predict ratings for unseen user-movie pairs.
 
-\paragraph{Generalization Methods}
-To ensure that the model generalizes well to unseen data, several techniques were employed:
+\paragraph{Key Components of the Model}
 
 \begin{itemize}
-	\item \textbf{Regularization}: Both the user and movie feature matrices were subjected to regularization to prevent overfitting. The regularization parameter is denoted as \( \lambda \), and it is applied as follows:
-	      \begin{equation}
-		      L = \sum_{u=1}^{U} \sum_{m=1}^{M} \left( \hat{y}(m,u) - y(m,u) \right)^2 + \lambda \left( \|P\|^2 + \|X\|^2 \right) \tag{1}
-	      \end{equation}
-	      where \(P\) and \(X\) represent the user and movie feature matrices, respectively.
+	\item \textbf{User and Movie Features}:
+	      Each user is represented by a vector of parameters \( \mathbf{p}_u \) consisting of a bias term \( p_{u,0} \) and feature weights \( p_{u,1}, p_{u,2}, \dots, p_{u,N} \), where \( N \) is the number of features.
+	      Similarly, each movie is represented by a vector of feature weights \( \mathbf{x}_m \), corresponding to the same features.
 
-	\item \textbf{Mean Normalization}: Prior to training, mean normalization was applied to the ratings. This involves centering the ratings around zero:
-	      \begin{equation}
-		      \bar{y}_m = \frac{1}{U} \sum_{u=1}^{U} y(m,u) \tag{2}
-	      \end{equation}
-	      The normalized ratings are given by:
-	      \begin{equation}
-		      y'_{m,u} = y_{m,u} - \bar{y}_m \tag{3}
-	      \end{equation}
+	\item \textbf{Prediction}:
+	      The predicted rating for a user \( u \) and movie \( m \) is calculated as:
+	      \[
+		      \hat{y}_{m,u} = p_{u,0} + \sum_{n=1}^N p_{u,n} x_{m,n},
+	      \]
+	      where \( \hat{y}_{m,u} \) represents the predicted rating, and the summation captures the interaction between user and movie features.
 
-	\item \textbf{Validation and Cross-Validation}: To assess the model’s generalization abilities, we employed \( k \)-fold cross-validation (with \( k = 5 \)). The process involves splitting the dataset into \( k \) subsets and iteratively training and validating the model on different combinations of these subsets.
+	\item \textbf{Loss Function}:
+	      The model is trained by minimizing the squared error between the predicted ratings \( \hat{y}_{m,u} \) and the actual ratings \( y_{m,u} \) for all observed user-movie pairs:
+	      \[
+		      Q = \frac{1}{2} \sum_{\text{observed } (m, u)} \left( \hat{y}_{m,u} - y_{m,u} \right)^2 + \frac{\lambda}{2} \left( \|\mathbf{P}\|^2 + \|\mathbf{X}\|^2 \right),
+	      \]
+	      where \( \lambda \) is a regularization parameter to prevent overfitting, and \( \|\cdot\|^2 \) denotes the sum of squared elements in the user parameter matrix \( \mathbf{P} \) and movie feature matrix \( \mathbf{X} \).
+
+	\item \textbf{Optimization}:
+	      Gradients for user parameters \( \mathbf{P} \) and movie features \( \mathbf{X} \) are derived as follows:
+	      \begin{align*}
+		      \frac{\partial Q}{\partial p_{u,0}} & = \sum_{\text{observed } (m,u)} (\hat{y}_{m,u} - y_{m,u}),                           \\
+		      \frac{\partial Q}{\partial p_{u,n}} & = \sum_{\text{observed } (m,u)} (\hat{y}_{m,u} - y_{m,u}) x_{m,n} + \lambda p_{u,n}, \\
+		      \frac{\partial Q}{\partial x_{m,n}} & = \sum_{\text{observed } (m,u)} (\hat{y}_{m,u} - y_{m,u}) p_{u,n} + \lambda x_{m,n}.
+	      \end{align*}
+
+	      These derivatives can be expressed in matrix multiplication form for efficient computation:
+	      \begin{align*}
+		      \nabla_{\mathbf{P}} & = (\mathbf{\hat{Y}} - \mathbf{Y})^\top \mathbf{X} + \lambda \mathbf{P}, \\
+		      \nabla_{\mathbf{X}} & = (\mathbf{\hat{Y}} - \mathbf{Y}) \mathbf{P} + \lambda \mathbf{X},
+	      \end{align*}
+	      where matrix $\mathbf{X}$ is augmented with a column of ones to account for the lack of bias term.
+	\item \textbf{Initialization}:
+	      User parameters and movie features are initialized with small random values. The model iteratively refines these parameters to reduce the loss function.
 \end{itemize}
 
-\paragraph{Algorithm Implementation}
-Our implementation details for the collaborative filtering model are as follows:
-
-\subparagraph{Movie Ratings}
-Let \( y_{m,u} \), or alternatively \( y[m,u] \), denote the rating of movie \( m \) by user \( u \). Therefore, \( y \) will be an \( M \times U \) matrix:
-\begin{equation}
-	y =
-	\begin{bmatrix}
-		y_{1,1} & y_{1,2} & \cdots & y_{1,U} \\
-		y_{2,1} & y_{2,2} & \cdots & y_{2,U} \\
-		\vdots  & \vdots  & \ddots & \vdots  \\
-		y_{M,1} & y_{M,2} & \cdots & y_{M,U}
-	\end{bmatrix} \tag{4}
-\end{equation}
-Valid ratings are integers from 0 to 5. If \( y_{m,u} \) takes the value of NaN, it denotes that user \( u \) did not rate movie \( m \).
-
-\subparagraph{Movie Features}
-Let \( N \) be the total number of features. Then, \( x_{m,n} \) will be the \( n \)-th feature of the movie \( m \). As such, \( x \) will be an \( M \times N \) matrix:
-\begin{equation}
-	x =
-	\begin{bmatrix}
-		x_{1,1} & x_{1,2} & \cdots & x_{1,N} \\
-		x_{2,1} & x_{2,2} & \cdots & x_{2,N} \\
-		\vdots  & \vdots  & \ddots & \vdots  \\
-		x_{M,1} & x_{M,2} & \cdots & x_{M,N}
-	\end{bmatrix} \tag{5}
-\end{equation}
-
-\subparagraph{User Parameters}
-Each user \( u \) will have a set of parameters \( p_u \) corresponding to the movie features, plus one additional feature \( p_{u,0} \):
-\begin{equation}
-	p =
-	\begin{bmatrix}
-		p_{1,0} & p_{1,1} & p_{1,2} & \cdots & p_{1,N} \\
-		p_{2,0} & p_{2,1} & p_{2,2} & \cdots & p_{2,N} \\
-		\vdots  & \vdots  & \vdots  & \ddots & \vdots  \\
-		p_{U,0} & p_{U,1} & p_{U,2} & \cdots & p_{U,N}
-	\end{bmatrix} \tag{6}
-\end{equation}
-
-\paragraph{Calculating Predictions}
-The predicted rating of movie \( m \) by user \( u \) will be denoted as \( \hat{y}(m,u) \). It will be calculated as follows:
-\begin{equation}
-	\hat{y}(m,u) = p_{u,0} + \sum_{n=1}^N p_{u,n} \cdot x_{m,n} \tag{7}
-\end{equation}
-Alternatively, as a dot product:
-\begin{equation}
-	\hat{y}(m,u) = p_{u,0} + p[u,1:] \cdot x[m,:] \tag{8}
-\end{equation}
-where
-\begin{equation}
-	p[u,1:] = \begin{bmatrix}
-		p_{u,1} & p_{u,2} & \cdots & p_{u,N}
-	\end{bmatrix}, \tag{9}
-\end{equation}
-and
-\begin{equation}
-	x[m,:] = \begin{bmatrix}
-		x_{m,1} & x_{m,2} & \cdots & x_{m,N}
-	\end{bmatrix}. \tag{10}
-\end{equation}
-
-\paragraph{Calculating Errors}
-The error function will be as follows:
-\begin{equation}
-	Q(p,x) = \frac{1}{2} \sum_{m,u : y[m,u] \neq -1} (\hat{y}(m,u) - y[m,u])^2 \tag{11}
-\end{equation}
-
-\paragraph{Partial Derivatives}
-\subparagraph{Zeroth User Parameter}
-\begin{equation}
-	\frac{\partial Q}{\partial p_{u,0}} = \sum_{m : y[m,u] \neq -1} (\hat{y}[m,u] - y[m,u]) \tag{12}
-\end{equation}
-
-\subparagraph{Other User Parameters (\(1, \ldots, N\))}
-\begin{equation}
-	\frac{\partial Q}{\partial p_{u,n}} = \sum_{m : y[m,u] \neq -1} (\hat{y}[m,u] - y[m,u]) \cdot x[m,n] \tag{13}
-\end{equation}
-
-\subparagraph{Movie Parameters}
-\begin{equation}
-	\frac{\partial Q}{\partial x_{m,n}} = \sum_{u : y[m,u] \neq -1} (\hat{y}[m,u] - y[m,u]) \cdot p[u,n] \tag{14}
-\end{equation}
-
-The collaborative filtering approach demonstrated promising results in predicting user ratings for movies. The training process involved iterating over multiple epochs and adjusting the parameters based on the computed gradients. The loss function focused on minimizing the difference between predicted and actual ratings, defined as:
-\begin{equation}
-	Q(P, X) = \frac{1}{2} \sum_{m,u : y(m,u) \neq \text{NaN}} \left( \hat{y}(m,u) - y(m,u) \right)^2 \tag{15}
-\end{equation}
 \subsection{Results}
 The training phase achieved a stable loss value after multiple iterations.
 The following metrics were used to evaluate performance:
