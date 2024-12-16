@@ -3,7 +3,7 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{float}
-\usepackage[margin=1in, paperheight=500mm]{geometry}
+\usepackage[margin=1in, paperheight=400mm]{geometry}
 \usepackage{fontspec}
 
 \graphicspath{{img/}}
@@ -234,20 +234,20 @@ The methodology for similarity measure involved the combination of \textbf{Pears
 \begin{itemize}
 	\item \textbf{Pearson Correlation:} Captures the linear relationship between two users' ratings, centering around their respective mean ratings to account for rating biases.
 	      \begin{equation}
-		      \text{Pearson Similarity} = \frac{\sum_{i} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i} (x_i - \bar{x})^2 \sum_{i} (y_i - \bar{y})^2}},
+		      \operatorname{sim}_\text{pearson}(x,y) = \frac{\sum_{i} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i} (x_i - \bar{x})^2 \sum_{i} (y_i - \bar{y})^2}},
 	      \end{equation}
 	      where \( x_i \) and \( y_i \) are ratings given by two users for the same movies, and \( \bar{x} \), \( \bar{y} \) are their respective mean ratings.
 
 	\item \textbf{Cosine Similarity:} Evaluates the angular similarity between two users' rating vectors, ignoring the magnitude of their ratings:
 	      \begin{equation}
-		      \text{Cosine Similarity} = \frac{\sum_{i} x_i y_i}{\sqrt{\sum_{i} x_i^2} \sqrt{\sum_{i} y_i^2}}.
+		      \operatorname{sim}_\text{cosine}(x,y) = \frac{\sum_{i} x_i y_i}{\sqrt{\sum_{i} x_i^2} \sqrt{\sum_{i} y_i^2}}.
 	      \end{equation}
 \end{itemize}
 
 
-A tunable weighting factor, \( \text{pearson\_weight} \), was used to blend the two metrics:
+A weighting factor, $w$, was used to blend the two metrics:
 \begin{equation}
-	\text{Combined Similarity} = \text{pearson\_weight} \cdot \text{Pearson Similarity} + (1 - \text{pearson\_weight}) \cdot \text{Cosine Similarity}.
+	\operatorname{sim}(x,y) = w \cdot \operatorname{sim}_\text{pearson}(x,y) + (1 - w) \cdot \operatorname{sim}_\text{cosine}(x,y) .
 \end{equation}
 This approach allowed flexibility in prioritizing either metric based on the validation performance.
 
