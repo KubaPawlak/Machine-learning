@@ -362,10 +362,80 @@ fitting the training data and generalizing to unseen data.
 
 \clearpage
 \section{Summary and Comparison}
+In this section, we present the comparative results of different machine
+learning approaches for predicting user ratings on movies.
+Each method was evaluated on training, validation, and testing datasets.
+The results are presented in Table ~\ref{tab:comparison_accuracy} and Table
+~\ref{tab:comparison_oneoff}.
 
-\begin{itemize}
-	\item Summarize the results for all approaches using test data or feedback.
-	\item Compare performance metrics and discuss the strengths and weaknesses of each method.
-	\item{} [Include a table or graph for comparison, if applicable].
-\end{itemize}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Method} & \textbf{Training Accuracy} & \textbf{Validation Accuracy} & \textbf{Testing Accuracy} \\ \hline
+        KNN & 0.56 & 0.37 & 0.36 \\ \hline
+        Decision Tree & 0.67 & 0.40 & 0.39 \\ \hline
+        Random Forest & 0.49 & 0.36 & 0.37 \\ \hline
+        Person Similarity & 0.34 & 0.32 & 0.27 \\ \hline
+        Collaborative Filtering & 0.54 & 0.38 & 0.41 \\ \hline
+    \end{tabular}
+    \caption{Comparison of Training, Validation, and Testing Accuracies}
+    \label{tab:comparison_accuracy}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Method} & \textbf{Training One-Off} & \textbf{Validation One-Off} & \textbf{Testing One-Off} \\ \hline
+        KNN & 0.21 & 0.31 & 0.67 \\ \hline
+        Decision Tree & 0.16 & 0.29 & 0.70 \\ \hline
+        Random Forest & 0.37 & 0.40 & 0.76 \\ \hline
+        Person Similarity & 0.49 & 0.46 & 0.71 \\ \hline
+        Collaborative Filtering & 0.39 & 0.38 & 0.78 \\ \hline
+    \end{tabular}
+    \caption{Comparison of One-Off Predictions for Training, Validation, and Testing}
+    \label{tab:comparison_oneoff}
+\end{table}
+
+\paragraph{KNN Approach:}
+The KNN model demonstrated moderate performance by utilizing features of the movies and other user ratings on selected movies.
+However, its performance on testing data was lower than on training and validation sets.
+This discrepancy suggests potential overfitting and issues with dataset representativeness, as users often rate only movies they enjoy, leading to biases in the data.
+The relatively high one-off prediction rate highlights the model’s ability to approximate user preferences even when exact predictions are less accurate.
+Despite its simplicity, KNN’s reliance on dense data limits its scalability and effectiveness in sparse datasets.
+
+\paragraph{Decision Tree Approach:}
+Decision Trees showed a structured approach to capturing user preferences, resulting in better performance than the KNN approach.
+However, their sensitivity to noise in the training data and tendency to overfit resulted in a significant decline in performance on unseen data.
+The notable drop in accuracy from training to testing data underscores the importance of careful hyperparameter tuning to improve generalization.
+While Decision Trees provided valuable insights into user behavior through their structured decision-making process, their usability diminishes in sparse datasets where overlapping user-movie interactions are limited.
+
+\paragraph{Random Forest Approach:}
+As expected, Random Forests addressed the overfitting limitations of single Decision Trees, offering a more balanced performance across training, validation, and testing data.
+While the exact prediction rate was slightly lower than Decision Trees, the model's robustness was evident in its ability to generalize and achieve the highest one-off prediction rate.
+This improved performance can be attributed to the ensemble's ability to reduce noise and overfitting, making it a reliable option for capturing broader user preferences.
+However, challenges in hyperparameter tuning may have constrained its full potential.
+These results suggest Random Forests may be more effective in scenarios requiring interpretability and resilience to noisy data.
+
+\paragraph{Person Similarity Approach:}
+The Person Similarity method was effective in dense data scenarios where users shared a significant number of common ratings.
+However, its reliance on overlapping ratings made it vulnerable to sparse datasets, resulting in lower overall accuracy.
+Despite these challenges, its relatively high one-off prediction rate underscores its usefulness in collaborative filtering scenarios, especially for datasets with strong user-item interactions.
+
+\paragraph{Collaborative Filtering Approach:}
+Collaborative Filtering emerged as the most effective method, achieving the highest testing accuracy and strong one-off prediction rates.
+Its balanced performance across training, validation, and testing data highlights its ability to leverage user-movie interaction patterns effectively.
+This approach excelled in generalization, making it particularly suitable for scenarios with sparse datasets, where capturing nuanced user preferences is essential.
+This performance underscores the importance of understanding user preferences and interactions in movie rating predictions.
+
+\paragraph{Conclusions:}
+Overall, each method showcased distinct strengths and limitations.
+KNN and Collaborative Filtering excel in generalization, while Decision Trees and Random Forests provide deeper insights into specific user preferences, but struggled with overfitting.
+The Person Similarity approach is particularly effective in scenarios with high overlap between user ratings, but underperformed with sparse data.
+Collaborative Filtering stood out as the most effective technique, indicating its potential for robust movie rating predictions.
+
+The consistently high one-off prediction rates across methods suggest that, while exact matches are challenging, the models can approximate user preferences effectively.
+These results highlight the importance of addressing dataset biases to ensure reliable generalization in predictive modeling.
+
 \end{document}
