@@ -6,6 +6,8 @@
 \usepackage[margin=1in, paperheight=500mm]{geometry}
 \usepackage{fontspec}
 
+\graphicspath{{img/}}
+
 \title{\vspace*{-1in}Summary report for Machine Learning}
 
 \author{Magdalena Pakuła \& Jakub Pawlak}
@@ -45,7 +47,7 @@ For these reasons, we decided to compute distances (similarities) separately, an
 To prepare the features for similarity calculations, the scalar features were scaled to a range $[0,1]$, using min-max scaler fitted to the entirety of the training data.
 
 \paragraph{Similarity Measures}
-The similarity between two movies was computed as a weighted sum of component-wise similarities,
+The similarity between two movies was computed as a weighted sum of component wise similarities,
 using different metrics for various feature types:
 
 \begin{itemize}
@@ -121,31 +123,6 @@ There are 2 cases when recursive training is stopped:
 	\item The training set has only one rating --- in which case splitting further would make no sense.
 \end{itemize}
 
-\begin{itemize}
-
-	\item \textbf{Splitting Criterion}:
-	      The Gini impurity was selected as the metric to evaluate the quality of splits. The Gini impurity for a node is calculated as:
-	      \begin{equation}
-		      \text{Gini Impurity} = 1 - \sum_{i=1}^{k} p_i^2,
-	      \end{equation}
-	      where \(p_i\) represents the probability of a sample belonging to class \(i\). The feature and threshold minimizing the Gini impurity were chosen at each step of the induction process.
-	\item \textbf{Feature Choices}: Features were divided into scalar (e.g., runtime), categorical (e.g., language), and multivalued (e.g., cast) types. Custom choice classes were implemented to handle these distinctions.
-	\item \textbf{Stopping Criteria}: Tree induction stopped either when the maximum depth was reached or when the node became pure (i.e., all samples had the same label).
-	\item \textbf{Visualization}: The \texttt{graphviz} library was used to visualize the resulting decision trees, enabling better understanding and analysis of the model.
-\end{itemize}
-
-\paragraph{Induction Process}
-The decision tree induction process followed a systematic approach:
-\begin{enumerate}
-	\item \textbf{Feature Selection}:
-	      For each node, the feature and split threshold minimizing the Gini impurity were identified.
-
-	\item \textbf{Recursive Splitting}:
-	      If a split produced two valid subsets, the process recursively created child nodes for the \textit{true} and \textit{false} cases.
-
-	\item \textbf{Leaf Node Assignment}:
-	      When a node could no longer be split (due to stopping criteria), it became a leaf node, and the most frequent label in the subset was assigned as the prediction.
-\end{enumerate}
 
 An example of a decision tree induced for a specific user is shown in Figure~\ref{fig:decision_tree}, illustrating how user-specific features were leveraged to make predictions.
 
@@ -171,12 +148,13 @@ The performance metrics indicated:
 	\label{tab:decision_tree_results}
 \end{table}
 
-The decision tree demonstrated its capability to identify patterns in user preferences,
-particularly for features such as genre or director, which strongly influenced ratings.
-However, its performance was constrained by the simplicity of single decision trees, which tend to make rigid,
-binary splits.
-The improvement can involve ensemble methods, such as random forests, to enhance generalization,
-which is presented in the next section.
+Decision trees demonstrated capability to fit specific user preferences, resulting in scores higher than KNN.
+They were able to identify patterns such as disliked actors or favorite genres. Moreover, their underlying representation is easy to reason about.
+
+The drawback of decision trees is that they are prone to overfitting. Even small changes in the training data can completely change the preferred choice of the tree. This makes this model very sensitive to noise or outliers in the training dataset, leading to poor generalization capabilities.
+
+The behavior of the tree is controlled by its depth, which is a hyperparameter of the model.
+If the tree is too shallow, it may fail to capture the user's preferences, but if it's too high, the tree might become very sensitive to outliers, which can be seen in the example image, where in the deep nodes, the tree creates braches for specific movies. We chose the depth of our tree by gradually increasing it until the accuracy on the validation dataset stopped increasing.
 
 \clearpage
 \section{Random Forest Approach}
@@ -185,8 +163,6 @@ The Random Forest approach is an ensemble learning method that combines multiple
 to enhance predictive performance and reduce overfitting.
 By aggregating the predictions of several individual trees, Random Forest mitigates the limitations of
 single decision trees, such as sensitivity to noise and high variance.
-To train the Random Forest model, features extracted from the TMDB dataset were used, including \texttt{director},
-\texttt{genres}, \texttt{runtime}, \texttt{popularity}, and other attributes.
 The ensemble's diversity was assured through two key mechanisms: the random selection of feature
 subsets for each tree and the use of bootstrapped training datasets, ensuring that each tree received
 a unique perspective on the data.
@@ -205,24 +181,17 @@ following key components:
 	      The Random Forest model combined the predictions of all trees in the ensemble using an averaging function. This aggregation reduced the variance of individual predictions and improved the robustness of the final recommendation scores.
 \end{itemize}
 
-The Random Forest ensemble operates under the following principles to ensure diversity and robustness:
-
-\begin{enumerate}
-	\item \textbf{Random Subsets of Features}:
-	      Each tree is trained on a randomly selected subset of features, ensuring that individual trees specialize in different aspects of the data. This approach decreases the likelihood of overfitting to specific features.
-	\item \textbf{Bootstrapped Datasets}:
-	      Individual trees are trained on datasets created through bootstrapping, where samples are drawn randomly with replacement from the original training data. This process introduces variability and ensures that each tree receives a unique training set.
-	\item \textbf{Prediction Aggregation}:
-	      During inference, the predictions from all individual trees are aggregated using an averaging function. For instance, if the trees predict ratings of \{3, 4, 3, 4, 5\}, the final recommendation score is calculated as their average.
-\end{enumerate}
 
 These principles collectively ensure that the Random Forest model reduces overfitting while maintaining high predictive accuracy.
 
 Since decision trees are interpretable models, it is possible to visualize the decision-making process of individual trees within the Random Forest. Figure~\ref{fig:random_forest_trees} illustrates sample decision trees from the ensemble for a single user. Each tree captures a unique hierarchical structure based on feature thresholds, contributing to the ensemble's diversity.
+The first tree reflects preferences based on actors and release year, the second one --- popularity, revenue, and budget, and the last one --- genres, budget and directors.
 
 \begin{figure}[h!]
 	\centering
-	\includegraphics[width=0.4\textwidth]{tree} %TODO: add image
+	\includegraphics[width=0.25\textwidth]{forest/tree_0.png}
+	\includegraphics[width=0.25\textwidth]{forest/tree_9.png}
+	\includegraphics[width=0.25\textwidth]{forest/tree_4.png}
 	\caption{Sample decision trees from the Random Forest ensemble for a single user. Each tree reflects a unique subset of features and bootstrapped training data.}
 	\label{fig:random_forest_trees}
 \end{figure}
@@ -242,18 +211,13 @@ The performance metrics indicated:
 	\label{tab:random_forest_results}
 \end{table}
 
-The results indicate that the Random Forest model significantly outperformed the
-single decision tree approach.
-By leveraging ensemble diversity, the model effectively captured complex relationships
-between features, resulting in improved generalization and predictive performance.
+Surprisingly the random forest approach did not outperform the decision tree as expected.
+We can notice however that the random forest did not have as much drop from training set to validation set performance.
+This suggests that is is overfitting less, as expected.
 
-In summary, the Random Forest approach is robust to overfitting,
-especially when working with noisy or complex datasets.
-Additionally, the embedded feature selection process simplifies model training
-by automatically identifying important attributes.
+Although it has lower correct prediciton rates, it outperforms the decision tree in the one-off errors, suggesting that it did sacrifice some exact prediction capabilities for more consistent near-accurate predictions. This may suggest that overall the random forest approach is more robust than a single decision tree.
 
-However, despite its strengths, Random Forest models can become computationally expensive for large datasets.
-Furthermore, the interpretability of the ensemble is reduced compared to individual decision trees.
+Another reason might be the wrong choice of hyperparameters. Decision tree has only one, but random forest in addition to the depth of the trees has the number of trees, the way of choosing features and bootstrapping the data, and finally, the aggregation function. This increased number of hyperparameters makes it much more difficult to perform an exhaustive grid search. This is additionally amplified by the fact that random forest is much more computationally intensive that a single decision tree by at least the factor of number of trees.
 
 \clearpage
 \section{Person Similarity Approach}
